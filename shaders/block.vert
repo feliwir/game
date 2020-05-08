@@ -17,11 +17,12 @@ layout(set = 1, binding = 0) uniform WorldBuffer
 
 layout(location = 0) in vec3 Position;
 layout(location = 1) in vec2 TexCoords;
+layout(location = 2) in vec3 InstancePosition;
 layout(location = 0) out vec2 fsin_texCoords;
 
 void main()
 {
-    vec4 worldPosition = World * vec4(Position, 1);
+    vec4 worldPosition = World * vec4(Position + InstancePosition, 1);
     vec4 viewPosition = View * worldPosition;
     vec4 clipPosition = Projection * viewPosition;
     gl_Position = clipPosition;

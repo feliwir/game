@@ -1,5 +1,6 @@
 ﻿
 using lumos;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using Veldrid;
@@ -53,13 +54,18 @@ namespace game
             var vertexShaderCode = System.IO.File.ReadAllText("shaders/block.vert");
             var fragmentShaderCode = System.IO.File.ReadAllText("shaders/block.frag");
 
-            ShaderSetDescription shaderSet = new ShaderSetDescription(
-                new[]
-                {
-                    new VertexLayoutDescription(
+            var sharedVertexLayout = new VertexLayoutDescription(
                         new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
-                        new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2))
-                },
+                        new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
+
+            var perInstanceVertexLayout = new VertexLayoutDescription(
+                        new VertexElementDescription("InstancePosition", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3))
+            {
+                InstanceStepRate = 1
+            };
+
+            ShaderSetDescription shaderSet = new ShaderSetDescription(
+                new VertexLayoutDescription [] { sharedVertexLayout, perInstanceVertexLayout },
                 game.Factory.CreateFromSpirv(
                     new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vertexShaderCode), "main"),
                     new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fragmentShaderCode), "main")));
@@ -96,14 +102,15 @@ namespace game
             cl.UpdateBuffer(m_worldBuffer, 0, ref m_worldMatrix);
         }
 
-        public void Draw(CommandList cl, ResourceSet projViewSet)
+        public void Draw(CommandList cl, ResourceSet projViewSet, DeviceBuffer instanceBuffer)
         {
             cl.SetPipeline(m_pipeline);
             cl.SetVertexBuffer(0, _vertexBuffer);
             cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
+            cl.SetVertexBuffer(1, instanceBuffer);
             cl.SetGraphicsResourceSet(0, projViewSet);
             cl.SetGraphicsResourceSet(1, _worldTextureSet);
-            cl.DrawIndexed(36, 1, 0, 0, 0);
+            cl.DrawIndexed(36, 200, 0, 0, 0);
         }
 
         private static VertexPositionTexture[] GetVertices()
