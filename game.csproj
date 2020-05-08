@@ -23,6 +23,9 @@
     <None Update="assets\coal_ore.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="assets\default.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="assets\dirt.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -10,7 +10,7 @@ using Veldrid.Utilities;
 
 namespace lumos
 {
-    class GameWindow
+    public class GameWindow
     {
         private readonly Sdl2Window m_window;
         private GraphicsDevice m_gd;

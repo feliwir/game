@@ -1,15 +1,12 @@
-﻿
-using System.Numerics;
-using Veldrid;
+﻿using System.Numerics;
 
 namespace game.blocks
 {
     public class DirtBlock : Block
     {
-        public override string _texName { get; protected set; } = "assets/dirt.png";
-
-        public DirtBlock(GraphicsDevice gd, ResourceFactory factory, Swapchain sc, Vector3 position) : base(gd, factory, sc, position)
+        public DirtBlock(Vector3 position) : base(position)
         {
+            _texName = "assets/dirt.png";
         }
     }
 }

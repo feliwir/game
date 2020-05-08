@@ -1,15 +1,12 @@
-﻿
-using System.Numerics;
-using Veldrid;
+﻿using System.Numerics;
 
 namespace game.blocks
 {
     public class StoneBlock : Block
     {
-        public override string _texName { get; protected set; } = "assets/stone.png";
-
-        public StoneBlock(GraphicsDevice gd, ResourceFactory factory, Swapchain sc, Vector3 position) : base(gd, factory, sc, position)
+        public StoneBlock(Vector3 position) : base(position)
         {
+            _texName = "assets/stone.png";
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿
+using lumos;
 using System.Numerics;
 using System.Text;
 using Veldrid;
@@ -9,31 +10,36 @@ namespace game.blocks
 {
     public abstract class BlockMultiTexture : Block
     {
-        public virtual string _texName2 { get; protected set; }
+        protected string _texNameTop = "assets/default.png";
+        protected string _texNameBottom = "assets/default.png";
+        protected string _texNameLeft = "assets/default.png";
+        protected string _texNameRight = "assets/default.png";
+        protected string _texNameBack = "assets/default.png";
+        protected string _texNameFront = "assets/default.png";
 
         private readonly VertexPositionTexture[] _vertices;
 
-        public BlockMultiTexture(GraphicsDevice gd, ResourceFactory factory, Swapchain sc, Vector3 position) : base(gd, factory, sc, position)
+        public BlockMultiTexture(Vector3 position) : base(position)
         {
             _vertices = GetVertices();
-            CreateResources(gd, factory, sc);
         }
 
-        private new void CreateResources(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
+        public override void CreateResources(Game game)
         {
-            m_worldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            m_worldBuffer = game.Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 
-            _vertexBuffer = factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * _vertices.Length), BufferUsage.VertexBuffer));
-            gd.UpdateBuffer(_vertexBuffer, 0, _vertices);
+            _vertexBuffer = game.Factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * _vertices.Length), BufferUsage.VertexBuffer));
+            game.GraphicsDevice.UpdateBuffer(_vertexBuffer, 0, _vertices);
 
-            _indexBuffer = factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)_indices.Length, BufferUsage.IndexBuffer));
-            gd.UpdateBuffer(_indexBuffer, 0, _indices);
+            _indexBuffer = game.Factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)_indices.Length, BufferUsage.IndexBuffer));
+            game.GraphicsDevice.UpdateBuffer(_indexBuffer, 0, _indices);
 
-            var texData = new ImageSharpTexture(_texName);
-            var surfaceTexture = texData.CreateDeviceTexture(gd, factory);
-
-            var texData2 = new ImageSharpTexture(_texName2);
-            var surfaceTexture2 = texData2.CreateDeviceTexture(gd, factory);
+            var textureTop = new ImageSharpTexture(_texNameTop).CreateDeviceTexture(game.GraphicsDevice, game.Factory);
+            var textureBottom = new ImageSharpTexture(_texNameBottom).CreateDeviceTexture(game.GraphicsDevice, game.Factory);
+            var textureLeft = new ImageSharpTexture(_texNameLeft).CreateDeviceTexture(game.GraphicsDevice, game.Factory);
+            var textureRight = new ImageSharpTexture(_texNameRight).CreateDeviceTexture(game.GraphicsDevice, game.Factory);
+            var textureBack = new ImageSharpTexture(_texNameBack).CreateDeviceTexture(game.GraphicsDevice, game.Factory);
+            var textureFront = new ImageSharpTexture(_texNameFront).CreateDeviceTexture(game.GraphicsDevice, game.Factory);
 
             var vertexShaderCode = System.IO.File.ReadAllText("shaders/block_multi_tex.vert");
             var fragmentShaderCode = System.IO.File.ReadAllText("shaders/block_multi_tex.frag");
@@ -46,37 +52,45 @@ namespace game.blocks
                         new VertexElementDescription("TexID", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Int1),
                         new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2))
                 },
-                factory.CreateFromSpirv(
+                game.Factory.CreateFromSpirv(
                     new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vertexShaderCode), "main"),
                     new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fragmentShaderCode), "main")));
 
-            ResourceLayout projViewLayout = factory.CreateResourceLayout(
+            ResourceLayout projViewLayout = game.Factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("ProjectionBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                     new ResourceLayoutElementDescription("ViewBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
 
-            ResourceLayout worldTextureLayout = factory.CreateResourceLayout(
+            ResourceLayout worldTextureLayout = game.Factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                    new ResourceLayoutElementDescription("SurfaceTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
-                    new ResourceLayoutElementDescription("SurfaceTexture2", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("TextureTop", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("TextureBottom", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("TextureLeft", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("TextureRight", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("TextureBack", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("TextureFront", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
                     new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
-            m_pipeline = factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
+            m_pipeline = game.Factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
                 DepthStencilStateDescription.DepthOnlyLessEqual,
                 RasterizerStateDescription.Default,
                 PrimitiveTopology.TriangleList,
                 shaderSet,
                 new[] { projViewLayout, worldTextureLayout },
-                sc.Framebuffer.OutputDescription));
+                game.Swapchain.Framebuffer.OutputDescription));
 
-            _worldTextureSet = factory.CreateResourceSet(new ResourceSetDescription(
+            _worldTextureSet = game.Factory.CreateResourceSet(new ResourceSetDescription(
                 worldTextureLayout,
                 m_worldBuffer,
-                surfaceTexture,
-                surfaceTexture2,
-                gd.Aniso4xSampler));
+                textureTop,
+                textureBottom,
+                textureLeft,
+                textureRight,
+                textureBack,
+                textureFront,
+                game.GraphicsDevice.Aniso4xSampler));
         }
 
         public new void Draw(CommandList cl, ResourceSet projViewSet)
@@ -99,30 +113,30 @@ namespace game.blocks
                 new VertexPositionTexture(new Vector3(+0.5f, +0.5f, +0.5f), 0, new Vector2(1, 1)),
                 new VertexPositionTexture(new Vector3(-0.5f, +0.5f, +0.5f), 0, new Vector2(0, 1)),
                 // Bottom
-                new VertexPositionTexture(new Vector3(-0.5f,-0.5f, +0.5f), 0, new Vector2(0, 0)),
-                new VertexPositionTexture(new Vector3(+0.5f,-0.5f, +0.5f), 0, new Vector2(1, 0)),
-                new VertexPositionTexture(new Vector3(+0.5f,-0.5f, -0.5f), 0, new Vector2(1, 1)),
-                new VertexPositionTexture(new Vector3(-0.5f,-0.5f, -0.5f), 0, new Vector2(0, 1)),
+                new VertexPositionTexture(new Vector3(-0.5f,-0.5f, +0.5f), 1, new Vector2(0, 0)),
+                new VertexPositionTexture(new Vector3(+0.5f,-0.5f, +0.5f), 1, new Vector2(1, 0)),
+                new VertexPositionTexture(new Vector3(+0.5f,-0.5f, -0.5f), 1, new Vector2(1, 1)),
+                new VertexPositionTexture(new Vector3(-0.5f,-0.5f, -0.5f), 1, new Vector2(0, 1)),
                 // Left 
-                new VertexPositionTexture(new Vector3(-0.5f, +0.5f, -0.5f), 1, new Vector2(0, 0)),
-                new VertexPositionTexture(new Vector3(-0.5f, +0.5f, +0.5f), 1, new Vector2(1, 0)),
-                new VertexPositionTexture(new Vector3(-0.5f, -0.5f, +0.5f), 1, new Vector2(1, 1)),
-                new VertexPositionTexture(new Vector3(-0.5f, -0.5f, -0.5f), 1, new Vector2(0, 1)),
+                new VertexPositionTexture(new Vector3(-0.5f, +0.5f, -0.5f), 2, new Vector2(0, 0)),
+                new VertexPositionTexture(new Vector3(-0.5f, +0.5f, +0.5f), 2, new Vector2(1, 0)),
+                new VertexPositionTexture(new Vector3(-0.5f, -0.5f, +0.5f), 2, new Vector2(1, 1)),
+                new VertexPositionTexture(new Vector3(-0.5f, -0.5f, -0.5f), 2, new Vector2(0, 1)),
                 // Right
-                new VertexPositionTexture(new Vector3(+0.5f, +0.5f, +0.5f), 1, new Vector2(0, 0)),
-                new VertexPositionTexture(new Vector3(+0.5f, +0.5f, -0.5f), 1, new Vector2(1, 0)),
-                new VertexPositionTexture(new Vector3(+0.5f, -0.5f, -0.5f), 1, new Vector2(1, 1)),
-                new VertexPositionTexture(new Vector3(+0.5f, -0.5f, +0.5f), 1, new Vector2(0, 1)),
+                new VertexPositionTexture(new Vector3(+0.5f, +0.5f, +0.5f), 3, new Vector2(0, 0)),
+                new VertexPositionTexture(new Vector3(+0.5f, +0.5f, -0.5f), 3, new Vector2(1, 0)),
+                new VertexPositionTexture(new Vector3(+0.5f, -0.5f, -0.5f), 3, new Vector2(1, 1)),
+                new VertexPositionTexture(new Vector3(+0.5f, -0.5f, +0.5f), 3, new Vector2(0, 1)),
                 // Back
-                new VertexPositionTexture(new Vector3(+0.5f, +0.5f, -0.5f), 1, new Vector2(0, 0)),
-                new VertexPositionTexture(new Vector3(-0.5f, +0.5f, -0.5f), 1, new Vector2(1, 0)),
-                new VertexPositionTexture(new Vector3(-0.5f, -0.5f, -0.5f), 1, new Vector2(1, 1)),
-                new VertexPositionTexture(new Vector3(+0.5f, -0.5f, -0.5f), 1, new Vector2(0, 1)),
+                new VertexPositionTexture(new Vector3(+0.5f, +0.5f, -0.5f), 4, new Vector2(0, 0)),
+                new VertexPositionTexture(new Vector3(-0.5f, +0.5f, -0.5f), 4, new Vector2(1, 0)),
+                new VertexPositionTexture(new Vector3(-0.5f, -0.5f, -0.5f), 4, new Vector2(1, 1)),
+                new VertexPositionTexture(new Vector3(+0.5f, -0.5f, -0.5f), 4, new Vector2(0, 1)),
                 // Front
-                new VertexPositionTexture(new Vector3(-0.5f, +0.5f, +0.5f), 1, new Vector2(0, 0)),
-                new VertexPositionTexture(new Vector3(+0.5f, +0.5f, +0.5f), 1, new Vector2(1, 0)),
-                new VertexPositionTexture(new Vector3(+0.5f, -0.5f, +0.5f), 1, new Vector2(1, 1)),
-                new VertexPositionTexture(new Vector3(-0.5f, -0.5f, +0.5f), 1, new Vector2(0, 1)),
+                new VertexPositionTexture(new Vector3(-0.5f, +0.5f, +0.5f), 5, new Vector2(0, 0)),
+                new VertexPositionTexture(new Vector3(+0.5f, +0.5f, +0.5f), 5, new Vector2(1, 0)),
+                new VertexPositionTexture(new Vector3(+0.5f, -0.5f, +0.5f), 5, new Vector2(1, 1)),
+                new VertexPositionTexture(new Vector3(-0.5f, -0.5f, +0.5f), 5, new Vector2(0, 1)),
             };
 
             return vertices;

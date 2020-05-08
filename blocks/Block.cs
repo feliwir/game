@@ -1,4 +1,5 @@
 ﻿
+using lumos;
 using System.Numerics;
 using System.Text;
 using Veldrid;
@@ -9,7 +10,7 @@ namespace game
 {
     public abstract class Block
     {
-        public virtual string _texName { get; protected set; }
+        protected string _texName = "assets/default.png";
 
         protected ResourceSet _worldTextureSet;
 
@@ -23,29 +24,31 @@ namespace game
         private readonly VertexPositionTexture[] _vertices;
         protected readonly ushort[] _indices;
 
+        // reduce to vec3?
         private Matrix4x4 m_worldMatrix;
 
-        public Block(GraphicsDevice gd, ResourceFactory factory, Swapchain sc, Vector3 position)
+        public bool is_visible = true;
+
+        public Block(Vector3 position)
         {
             m_worldMatrix = Matrix4x4.Identity;
             m_worldMatrix.Translation = position;
             _vertices = GetVertices();
             _indices = GetIndices();
-            CreateResources(gd, factory, sc);
         }
 
-        protected void CreateResources(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
+        public virtual void CreateResources(Game game)
         {
-            m_worldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            m_worldBuffer = game.Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 
-            _vertexBuffer = factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * _vertices.Length), BufferUsage.VertexBuffer));
-            gd.UpdateBuffer(_vertexBuffer, 0, _vertices);
+            _vertexBuffer = game.Factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * _vertices.Length), BufferUsage.VertexBuffer));
+            game.GraphicsDevice.UpdateBuffer(_vertexBuffer, 0, _vertices);
 
-            _indexBuffer = factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)_indices.Length, BufferUsage.IndexBuffer));
-            gd.UpdateBuffer(_indexBuffer, 0, _indices);
+            _indexBuffer = game.Factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)_indices.Length, BufferUsage.IndexBuffer));
+            game.GraphicsDevice.UpdateBuffer(_indexBuffer, 0, _indices);
 
             var texData = new ImageSharpTexture(_texName);
-            var surfaceTexture = texData.CreateDeviceTexture(gd, factory);
+            var surfaceTexture = texData.CreateDeviceTexture(game.GraphicsDevice, game.Factory);
 
             var vertexShaderCode = System.IO.File.ReadAllText("shaders/block.vert");
             var fragmentShaderCode = System.IO.File.ReadAllText("shaders/block.frag");
@@ -57,35 +60,35 @@ namespace game
                         new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                         new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2))
                 },
-                factory.CreateFromSpirv(
+                game.Factory.CreateFromSpirv(
                     new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vertexShaderCode), "main"),
                     new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fragmentShaderCode), "main")));
 
-            ResourceLayout projViewLayout = factory.CreateResourceLayout(
+            ResourceLayout projViewLayout = game.Factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("ProjectionBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                     new ResourceLayoutElementDescription("ViewBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
 
-            ResourceLayout worldTextureLayout = factory.CreateResourceLayout(
+            ResourceLayout worldTextureLayout = game.Factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                     new ResourceLayoutElementDescription("SurfaceTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
                     new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
-            m_pipeline = factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
+            m_pipeline = game.Factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
                 DepthStencilStateDescription.DepthOnlyLessEqual,
                 RasterizerStateDescription.Default,
                 PrimitiveTopology.TriangleList,
                 shaderSet,
                 new[] { projViewLayout, worldTextureLayout },
-                sc.Framebuffer.OutputDescription));
+                game.Swapchain.Framebuffer.OutputDescription));
 
-            _worldTextureSet = factory.CreateResourceSet(new ResourceSetDescription(
+            _worldTextureSet = game.Factory.CreateResourceSet(new ResourceSetDescription(
                 worldTextureLayout,
                 m_worldBuffer,
                 surfaceTexture,
-                gd.Aniso4xSampler));
+                game.GraphicsDevice.Aniso4xSampler));
         }
 
         public void Update(float deltaSeconds, CommandList cl)
