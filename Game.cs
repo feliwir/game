@@ -8,6 +8,8 @@ namespace lumos
 {
     class Game
     {
+        protected Camera _camera;
+
         private CommandList m_cl;
         private GraphicsDevice m_gd;
         private ResourceFactory m_factory;
@@ -17,9 +19,6 @@ namespace lumos
         private DeviceBuffer _projectionBuffer;
         private DeviceBuffer _viewBuffer;
         private ResourceSet _projViewSet;
-
-        private Matrix4x4 m_fov;
-        private Matrix4x4 m_lookAt;
 
         private List<Block> blocks = new List<Block>();
 
@@ -31,6 +30,8 @@ namespace lumos
             m_window.Rendering += OnDraw;
             m_window.KeyPressed += OnKeyDown;
             m_window.GraphicsDeviceCreated += OnGraphicsDeviceCreated;
+
+            _camera = new Camera(window.Width, window.Height);
         }
 
         protected void OnGraphicsDeviceCreated(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
@@ -40,21 +41,37 @@ namespace lumos
             m_sc = sc;
             CreateResources();
 
-            m_fov = Matrix4x4.CreatePerspectiveFieldOfView(
-                1.0f,
-                (float)m_window.Width / m_window.Height,
-                0.5f,
-                100f);
-
-            m_lookAt = Matrix4x4.CreateLookAt(Vector3.UnitZ * 2.5f, Vector3.Zero, Vector3.UnitY);
-
-            for (var x = 0; x < 5; x++)
+            for (var x = 0; x < 16; x++)
             {
-                for (var y = 0; y < 5; y++)
+                for (var z = 0; z < 16; z++)
                 {
-                    blocks.Add(new GrassBlock(gd, factory, sc, new Vector3(x, y, 0)));
+                    blocks.Add(new StoneBlock(gd, factory, sc, new Vector3(x, 0, z)));
                 }
             }
+
+            for (var x = 0; x < 16; x++)
+            {
+                for (var z = 0; z < 16; z++)
+                {
+                    blocks.Add(new DirtBlock(gd, factory, sc, new Vector3(x, 1, z)));
+                }
+            }
+
+            for (var x = 0; x < 16; x++)
+            {
+                for (var z = 0; z < 16; z++)
+                {
+                    blocks.Add(new DirtBlock(gd, factory, sc, new Vector3(x, 2, z)));
+                }
+            }
+
+            //for (var x = 0; x < 16; x++)
+            //{
+            //    for (var z = 0; z < 16; z++)
+            //    {
+            //        blocks.Add(new GrassBlock(gd, factory, sc, new Vector3(x, 2, z)));
+            //    }
+            //}
         }
 
         protected void CreateResources()
@@ -73,9 +90,6 @@ namespace lumos
                 _viewBuffer));
 
             m_cl = m_factory.CreateCommandList();
-
-            m_cl.UpdateBuffer(_projectionBuffer, 0, ref m_fov);
-            m_cl.UpdateBuffer(_viewBuffer, 0, ref m_lookAt);
         }
 
         protected void OnKeyDown(KeyEvent ke)
@@ -84,6 +98,8 @@ namespace lumos
 
         public void OnPreDraw(float delta)
         {
+            _camera.Update(delta);
+
             foreach (var block in blocks)
             {
                 block.Update(delta, m_cl);
@@ -94,8 +110,8 @@ namespace lumos
         {
             m_cl.Begin();
 
-            m_cl.UpdateBuffer(_projectionBuffer, 0, ref m_fov);
-            m_cl.UpdateBuffer(_viewBuffer, 0, ref m_lookAt);
+            m_cl.UpdateBuffer(_projectionBuffer, 0, _camera.ProjectionMatrix);
+            m_cl.UpdateBuffer(_viewBuffer, 0, _camera.ViewMatrix);
 
             m_cl.SetFramebuffer(m_sc.Framebuffer);
             m_cl.ClearColorTarget(0, RgbaFloat.Black);
@@ -114,13 +130,7 @@ namespace lumos
 
         public void OnResize()
         {
-            m_fov = Matrix4x4.CreatePerspectiveFieldOfView(
-                1.0f,
-                (float)m_window.Width / m_window.Height,
-                0.5f,
-                100f);
-
-            m_cl.UpdateBuffer(_projectionBuffer, 0, ref m_fov);
+            _camera.WindowResized(m_window.Width, m_window.Height);
         }
     }
 }

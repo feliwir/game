@@ -11,19 +11,17 @@ namespace game
     {
         public virtual string _texName { get; protected set; }
 
-        private Texture _surfaceTexture;
-        private TextureView _surfaceTextureView;
-        private ResourceSet _worldTextureSet;
+        protected ResourceSet _worldTextureSet;
 
-        private DeviceBuffer _vertexBuffer;
-        private DeviceBuffer _indexBuffer;
+        protected DeviceBuffer _vertexBuffer;
+        protected DeviceBuffer _indexBuffer;
 
-        private DeviceBuffer m_worldBuffer;
+        protected DeviceBuffer m_worldBuffer;
 
-        private Pipeline m_pipeline;
+        protected Pipeline m_pipeline;
 
         private readonly VertexPositionTexture[] _vertices;
-        private readonly ushort[] _indices;
+        protected readonly ushort[] _indices;
 
         private Matrix4x4 m_worldMatrix;
 
@@ -31,12 +29,12 @@ namespace game
         {
             m_worldMatrix = Matrix4x4.Identity;
             m_worldMatrix.Translation = position;
-            _vertices = GetCubeVertices();
-            _indices = GetCubeIndices();
+            _vertices = GetVertices();
+            _indices = GetIndices();
             CreateResources(gd, factory, sc);
         }
 
-        private void CreateResources(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
+        protected void CreateResources(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
         {
             m_worldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 
@@ -47,11 +45,10 @@ namespace game
             gd.UpdateBuffer(_indexBuffer, 0, _indices);
 
             var texData = new ImageSharpTexture(_texName);
-            _surfaceTexture = texData.CreateDeviceTexture(gd, factory);
-            _surfaceTextureView = factory.CreateTextureView(_surfaceTexture);
+            var surfaceTexture = texData.CreateDeviceTexture(gd, factory);
 
-            var vertexShaderCode = System.IO.File.ReadAllText("shaders/cube.vert");
-            var fragmentShaderCode = System.IO.File.ReadAllText("shaders/cube.frag");
+            var vertexShaderCode = System.IO.File.ReadAllText("shaders/block.vert");
+            var fragmentShaderCode = System.IO.File.ReadAllText("shaders/block.frag");
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 new[]
@@ -87,7 +84,7 @@ namespace game
             _worldTextureSet = factory.CreateResourceSet(new ResourceSetDescription(
                 worldTextureLayout,
                 m_worldBuffer,
-                _surfaceTextureView,
+                surfaceTexture,
                 gd.Aniso4xSampler));
         }
 
@@ -106,7 +103,7 @@ namespace game
             cl.DrawIndexed(36, 1, 0, 0, 0);
         }
 
-        private static VertexPositionTexture[] GetCubeVertices()
+        private static VertexPositionTexture[] GetVertices()
         {
             VertexPositionTexture[] vertices = new VertexPositionTexture[]
             {
@@ -145,7 +142,7 @@ namespace game
             return vertices;
         }
 
-        private static ushort[] GetCubeIndices()
+        private static ushort[] GetIndices()
         {
             ushort[] indices =
             {
@@ -160,7 +157,7 @@ namespace game
             return indices;
         }
 
-        public struct VertexPositionTexture
+        private struct VertexPositionTexture
         {
             public const uint SizeInBytes = 20;
 

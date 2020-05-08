@@ -1,4 +1,5 @@
-﻿using System;
+﻿using game;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -71,6 +72,7 @@ namespace lumos
                 float deltaSeconds = (float)(newElapsed - previousElapsed);
 
                 InputSnapshot inputSnapshot = m_window.PumpEvents();
+                InputTracker.UpdateFrameInput(inputSnapshot);
 
                 if (m_window.Exists)
                 {
