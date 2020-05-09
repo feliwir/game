@@ -41,7 +41,8 @@ namespace lumos
             Swapchain = sc;
             CreateResources();
 
-            chunks.Add(new Chunk(this, new Vector2(0, 0)));
+            var chunk = new Chunk(this, new Vector3(0, 0, 0));
+            chunks.Add(chunk);
         }
 
         protected void CreateResources()

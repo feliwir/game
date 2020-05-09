@@ -25,22 +25,20 @@ namespace game
         private readonly VertexPositionTexture[] _vertices;
         protected readonly ushort[] _indices;
 
-        // reduce to vec3?
-        private Matrix4x4 m_worldMatrix;
+        private Vector3 m_world;
 
         public bool is_visible = true;
 
         public Block(Vector3 position)
         {
-            m_worldMatrix = Matrix4x4.Identity;
-            m_worldMatrix.Translation = position;
+            m_world = position;
             _vertices = GetVertices();
             _indices = GetIndices();
         }
 
         public virtual void CreateResources(Game game)
         {
-            m_worldBuffer = game.Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            m_worldBuffer = game.Factory.CreateBuffer(new BufferDescription(12, BufferUsage.UniformBuffer));
 
             _vertexBuffer = game.Factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * _vertices.Length), BufferUsage.VertexBuffer));
             game.GraphicsDevice.UpdateBuffer(_vertexBuffer, 0, _vertices);
@@ -99,7 +97,7 @@ namespace game
 
         public void Update(float deltaSeconds, CommandList cl)
         {
-            cl.UpdateBuffer(m_worldBuffer, 0, ref m_worldMatrix);
+            cl.UpdateBuffer(m_worldBuffer, 0, ref m_world);
         }
 
         public void Draw(CommandList cl, ResourceSet projViewSet, DeviceBuffer instanceBuffer)

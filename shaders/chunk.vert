@@ -21,7 +21,6 @@ layout(location = 2) in vec2 TexCoords;
 layout(location = 0) out int fsin_texId;
 layout(location = 1) out vec2 fsin_texCoords;
 
-
 void main()
 {
     vec4 worldPosition = vec4(World + Position, 1);
