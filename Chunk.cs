@@ -14,7 +14,7 @@ namespace game
         private const int WIDTH = 16;
         private const int HEIGHT = 100;
 
-        private int[,,] blocks = new int[WIDTH, WIDTH, HEIGHT];
+        private int[,,] blocks = new int[WIDTH, HEIGHT, WIDTH];
 
         private const int STONE_HEIGHT = 2;
         private const int DIRT_HEIGHT = 1;
@@ -45,7 +45,7 @@ namespace game
                 {
                     for (var z = 0; z < WIDTH; z++)
                     {
-                        blocks[x, z, y] = 1; // TODO: Use a block type here
+                        blocks[x, y, z] = 1; // TODO: Use a block type here
                     }
                 }
             }
@@ -57,7 +57,7 @@ namespace game
                 {
                     for (var z = 0; z < WIDTH; z++)
                     {
-                        blocks[x, z, y] = 2; // TODO: Use a block type here
+                        blocks[x, y, z] = 2; // TODO: Use a block type here
                     }
                 }
             }
@@ -67,7 +67,7 @@ namespace game
             {
                 for (var z = 0; z < WIDTH; z++)
                 {
-                    blocks[x, z, STONE_HEIGHT + DIRT_HEIGHT] = 3; // TODO: Use a block type here
+                    blocks[x, STONE_HEIGHT + DIRT_HEIGHT, z] = 3; // TODO: Use a block type here
                 }
             }
         }
@@ -140,34 +140,34 @@ namespace game
                 {
                     for (var z = 0; z < WIDTH; z++)
                     {
-                        var blockType = blocks[x, z, y];
+                        var blockType = blocks[x, y, z];
                         if (blockType == 0) continue;
 
                         //TODO: handle neighboring chunks
 
-                        //var topBlock = y < HEIGHT ? blocks[x, z, y + 1] : 0;
-                        //if (topBlock == 0) 
-                        AddFace(x, z, y, blockType, FaceType.Top);
+                        var topBlock = y < HEIGHT - 1 ? blocks[x, y + 1, z] : 0;
+                        if (topBlock == 0) 
+                            AddFace(x, y, z, blockType, FaceType.Top);
 
-                        //var bottomBlock = y > 0 ? blocks[x, z, y - 1] : 0;
-                        //if (bottomBlock == 0)
-                        AddFace(x, z, y, blockType, FaceType.Bottom);
+                        var bottomBlock = y > 0 ? blocks[x, y - 1, z] : 0;
+                        if (bottomBlock == 0)
+                            AddFace(x, y, z, blockType, FaceType.Bottom);
 
-                        //var leftBlock = x > 0 ? blocks[x - 1, z, y] : 0;
-                        //if (leftBlock == 0)
-                        AddFace(x, z, y, blockType, FaceType.Left);
+                        var leftBlock = x > 0 ? blocks[x - 1, y, z] : 0;
+                        if (leftBlock == 0)
+                            AddFace(x, y, z, blockType, FaceType.Left);
 
-                        //var rightBlock = x < WIDTH ? blocks[x + 1, z, y] : 0;
-                        //if (rightBlock == 0)
-                        AddFace(x, z, y, blockType, FaceType.Right);
+                        var rightBlock = x < WIDTH - 1 ? blocks[x + 1, y, z] : 0;
+                        if (rightBlock == 0)
+                            AddFace(x, y, z, blockType, FaceType.Right);
 
-                        //var backBlock = z < WIDTH ? blocks[x, z + 1, y] : 0;
-                        //if (backBlock == 0)
-                        AddFace(x, z, y, blockType, FaceType.Back);
+                        var backBlock = z < WIDTH - 1 ? blocks[x, y, z + 1] : 0;
+                        if (backBlock == 0)
+                            AddFace(x, y, z, blockType, FaceType.Back);
 
-                        //var frontBlock = z > 0 ? blocks[x, z - 1, y] : 0;
-                        //if (frontBlock == 0)
-                        AddFace(x, z, y, blockType, FaceType.Front);
+                        var frontBlock = z > 0 ? blocks[x, y, z - 1] : 0;
+                        if (frontBlock == 0)
+                            AddFace(x, y, z, blockType, FaceType.Front);
                     }
                 }
             }
@@ -196,10 +196,10 @@ namespace game
             }
         }
 
-        private void AddFace(int x, int z, int y, int texId, FaceType face_type)
+        private void AddFace(int x, int y, int z, int texId, FaceType face_type)
         {
             var verts = front_vertices;
-            var offset = new Vector3(x, z, y);
+            var offset = new Vector3(x, y, z);
             switch (face_type)
             {
                 case FaceType.Top:
