@@ -222,18 +222,18 @@ namespace game
                     break;
             }
 
+            var index = (ushort)vertices.Count;
+            indices.Add(index);
+            indices.Add((ushort)(index + 1));
+            indices.Add((ushort)(index + 2));
+
+            indices.Add(index);
+            indices.Add((ushort)(index + 2));
+            indices.Add((ushort)(index + 3));
+
             for (var i = 0; i < 4; i++)
             {
                 vertices.Add(new VertexPositionTexture(verts[i] + offset, texId, uv_coords[i]));
-
-                var index = (ushort)vertices.Count;
-                indices.Add(index);
-                indices.Add((ushort)(index + 1));
-                indices.Add((ushort)(index + 2));
-
-                indices.Add(index);
-                indices.Add((ushort)(index + 2));
-                indices.Add((ushort)(index + 3));
             }
         }
 
@@ -249,50 +249,50 @@ namespace game
 
         private List<Vector3> top_vertices = new List<Vector3>
         { 
-            new Vector3(-0.5f, +0.5f, -0.5f),
-            new Vector3(-0.5f, +0.5f, -0.5f),
-            new Vector3(-0.5f, +0.5f, -0.5f),
-            new Vector3(-0.5f, +0.5f, -0.5f)
+            new Vector3(0f, 1f, 0f),
+            new Vector3(1f, 1f, 0f),
+            new Vector3(1f, 1f, 1f),
+            new Vector3(0f, 1f, 1f)
         };
 
         private List<Vector3> bottom_vertices = new List<Vector3>
         {
-            new Vector3(-0.5f, +0.5f, -0.5f),
-            new Vector3(+0.5f, +0.5f, -0.5f),
-            new Vector3(+0.5f, +0.5f, +0.5f),
-            new Vector3(-0.5f, +0.5f, +0.5f)
+            new Vector3(1f, 0f, 0f),
+            new Vector3(0f, 0f, 0f),
+            new Vector3(0f, 0f, 1f),
+            new Vector3(1f, 0f, 1f)
         };
 
         private List<Vector3> left_vertices = new List<Vector3>
         {
-            new Vector3(-0.5f, +0.5f, -0.5f),
-            new Vector3(-0.5f, +0.5f, +0.5f),
-            new Vector3(-0.5f, -0.5f, +0.5f),
-            new Vector3(-0.5f, -0.5f, -0.5f)
+            new Vector3(0f, 0f, 1f),
+            new Vector3(0f, 0f, 0f),
+            new Vector3(0f, 1f, 0f),
+            new Vector3(0f, 1f, 1f)
         };
 
         private List<Vector3> right_vertices = new List<Vector3>
         {
-            new Vector3(+0.5f, +0.5f, +0.5f),
-            new Vector3(+0.5f, +0.5f, -0.5f),
-            new Vector3(+0.5f, -0.5f, -0.5f),
-            new Vector3(+0.5f, -0.5f, +0.5f)
+            new Vector3(1f, 0f, 0f),
+            new Vector3(1f, 0f, 1f),
+            new Vector3(1f, 1f, 1f),
+            new Vector3(1f, 1f, 0f)
         };
 
         private List<Vector3> back_vertices = new List<Vector3>
         {
-            new Vector3(+0.5f, +0.5f, -0.5f),
-            new Vector3(-0.5f, +0.5f, -0.5f),
-            new Vector3(-0.5f, -0.5f, -0.5f),
-            new Vector3(+0.5f, -0.5f, -0.5f)
+            new Vector3(1f, 0f, 1f),
+            new Vector3(0f, 0f, 1f),
+            new Vector3(0f, 1f, 1f),
+            new Vector3(1f, 1f, 1f)
         };
 
         private List<Vector3> front_vertices = new List<Vector3>
         {
-            new Vector3(-0.5f, +0.5f, +0.5f),
-            new Vector3(+0.5f, +0.5f, +0.5f),
-            new Vector3(+0.5f, -0.5f, +0.5f),
-            new Vector3(-0.5f, -0.5f, +0.5f)
+            new Vector3(0f, 0f, 0f),
+            new Vector3(1f, 0f, 0f),
+            new Vector3(1f, 1f, 0f),
+            new Vector3(0f, 1f, 0f)
         };
 
         private List<Vector2> uv_coords = new List<Vector2>
