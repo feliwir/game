@@ -13,12 +13,12 @@ namespace game
         private Matrix4x4 _viewMatrix;
         private Matrix4x4 _projectionMatrix;
 
-        private Vector3 _position = new Vector3(0, 5, 0);
-        private Vector3 _lookDirection = new Vector3(1, -.3f, -1);
+        private Vector3 _position = new Vector3(-10, 10, -10);
+        private Vector3 _lookDirection;
         private float _moveSpeed = 10.0f;
 
-        private float _yaw;
-        private float _pitch;
+        private float _yaw = 180;
+        private float _pitch = 0;
 
         private Vector2 _previousMousePos;
         private float _windowWidth;

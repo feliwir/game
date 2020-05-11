@@ -1,5 +1,6 @@
 ﻿using game.blocks;
 using lumos;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -78,8 +79,9 @@ namespace game
 
             CreateVertices(game);
 
-            var texData = new ImageSharpTexture("assets/stone.png");
-            var surfaceTexture = texData.CreateDeviceTexture(game.GraphicsDevice, game.Factory);
+            var textureNames = new List<string> { "assets/stone.png", "assets/dirt.png", "assets/grass_top.png" };
+
+            var textureArray = CreateTextureArray(textureNames, game);
 
             var vertexShaderCode = System.IO.File.ReadAllText("shaders/chunk.vert");
             var fragmentShaderCode = System.IO.File.ReadAllText("shaders/chunk.frag");
@@ -118,8 +120,72 @@ namespace game
             worldTextureSet = game.Factory.CreateResourceSet(new ResourceSetDescription(
                 worldTextureLayout,
                 m_worldBuffer,
-                surfaceTexture,
+                textureArray,
                 game.GraphicsDevice.Aniso4xSampler));
+        }
+
+        private Texture CreateTextureArray(List<string> textureNames, Game game)
+        {
+            var largestTextureSize = uint.MinValue;
+            var textures = new List<ImageSharpTexture>();
+
+            foreach (var textureName in textureNames)
+            {
+                var texture = new ImageSharpTexture(textureName);
+                textures.Add(texture);
+                largestTextureSize = Math.Max(largestTextureSize, texture.Width);
+            }
+
+            var textureArray = game.GraphicsDevice.ResourceFactory.CreateTexture(
+                TextureDescription.Texture2D(
+                    largestTextureSize,
+                    largestTextureSize,
+                    CalculateMipMapCount(largestTextureSize, largestTextureSize),
+                    (uint)textures.Count,
+                    PixelFormat.R8_G8_B8_A8_UNorm,
+                    TextureUsage.Sampled));
+
+
+            var commandList = game.GraphicsDevice.ResourceFactory.CreateCommandList();
+            commandList.Begin();
+
+            var i = 0;
+            foreach (var texture in textures)
+            {
+                var sourceTexture = texture.CreateDeviceTexture(game.GraphicsDevice, game.Factory);
+
+                for (var mipLevel = 0u; mipLevel < texture.MipLevels; mipLevel++)
+                {
+                    commandList.CopyTexture(
+                        sourceTexture,
+                        0, 0, 0,
+                        mipLevel,
+                        0,
+                        textureArray,
+                        0, 0, 0,
+                        mipLevel,
+                        (uint)i,
+                        (uint)texture.Images[mipLevel].Width,
+                        (uint)texture.Images[mipLevel].Height,
+                        1,
+                        1);
+                }
+                i++;
+            }
+
+            commandList.End();
+
+            game.GraphicsDevice.SubmitCommands(commandList);
+            game.GraphicsDevice.DisposeWhenIdle(commandList);
+            game.GraphicsDevice.WaitForIdle();
+
+            return textureArray;
+        }
+
+
+        private static uint CalculateMipMapCount(uint width, uint height)
+        {
+            return 1u + (uint)Math.Floor(Math.Log(Math.Max(width, height), 2));
         }
 
         public void Draw(CommandList cl, ResourceSet projViewSet)
@@ -146,28 +212,22 @@ namespace game
                         //TODO: handle neighboring chunks
 
                         var topBlock = y < HEIGHT - 1 ? blocks[x, y + 1, z] : 0;
-                        if (topBlock == 0) 
-                            AddFace(x, y, z, blockType, FaceType.Top);
+                        if (topBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Top);
 
                         var bottomBlock = y > 0 ? blocks[x, y - 1, z] : 0;
-                        if (bottomBlock == 0)
-                            AddFace(x, y, z, blockType, FaceType.Bottom);
+                        if (bottomBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Bottom);
 
                         var leftBlock = x > 0 ? blocks[x - 1, y, z] : 0;
-                        if (leftBlock == 0)
-                            AddFace(x, y, z, blockType, FaceType.Left);
+                        if (leftBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Left);
 
                         var rightBlock = x < WIDTH - 1 ? blocks[x + 1, y, z] : 0;
-                        if (rightBlock == 0)
-                            AddFace(x, y, z, blockType, FaceType.Right);
+                        if (rightBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Right);
 
                         var backBlock = z < WIDTH - 1 ? blocks[x, y, z + 1] : 0;
-                        if (backBlock == 0)
-                            AddFace(x, y, z, blockType, FaceType.Back);
+                        if (backBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Back);
 
                         var frontBlock = z > 0 ? blocks[x, y, z - 1] : 0;
-                        if (frontBlock == 0)
-                            AddFace(x, y, z, blockType, FaceType.Front);
+                        if (frontBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Front);
                     }
                 }
             }
@@ -182,18 +242,6 @@ namespace game
         public void Update(float deltaSeconds, CommandList cl)
         {
            
-        }
-
-        private struct InstanceInfo
-        {
-            public const uint SizeInBytes = 12;
-
-            public Vector3 Position;
-
-            public InstanceInfo(Vector3 position)
-            {
-                Position = position;
-            }
         }
 
         private void AddFace(int x, int y, int z, int texId, FaceType face_type)
