@@ -6,18 +6,22 @@ namespace game.blocks
     {
         public static new BlockType Type { get; } = BlockType.GRASS;
 
-        public GrassBlock(List<string> blockTextures)
+        public GrassBlock(List<Material> blockMaterials)
         {
-            var textures = new List<string>
+            var topMaterial = new Material("grass_block_top.png", "grass_block_top_n.png");
+            var sideMaterial = new Material("grass_block_side.png", "grass_block_side_n.png");
+            var bottomMaterial = new Material("dirt.png", "dirt_n.png");
+
+            var materials = new List<Material>
             {
-                "assets/textures/grass_block_top.png",
-                "assets/textures/dirt.png",
-                "assets/textures/grass_block_side.png",
-                "assets/textures/grass_block_side.png",
-                "assets/textures/grass_block_side.png",
-                "assets/textures/grass_block_side.png"
+                topMaterial,
+                bottomMaterial,
+                sideMaterial,
+                sideMaterial,
+                sideMaterial,
+                sideMaterial
             };
-            SetTextureIDs(blockTextures, textures);
+            SetMaterialIDs(blockMaterials, materials);
         }
     }
 }

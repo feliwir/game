@@ -6,10 +6,11 @@ namespace game.blocks
     {
         public static new BlockType Type { get; } = BlockType.COAL_ORE;
 
-        public CoalOreBlock (List<string> blockTextures)
+        public CoalOreBlock (List<Material> blockMaterials)
         {
-            var textures = new List<string> { "assets/textures/coal_ore.png" };
-            SetTextureIDs(blockTextures, textures);
+            var material = new Material("coal_ore.png", "coal_ore_n.png");
+            var materials = new List<Material> { material };
+            SetMaterialIDs(blockMaterials, materials);
         }
     }
 }

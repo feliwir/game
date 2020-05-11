@@ -6,10 +6,11 @@ namespace game.blocks
     {
         public static new BlockType Type { get; } = BlockType.SAND;
 
-        public SandBlock(List<string> blockTextures)
+        public SandBlock(List<Material> blockMaterials)
         {
-            var textures = new List<string> { "assets/textures/sand.png" };
-            SetTextureIDs(blockTextures, textures);
+            var material = new Material("sand.png", "sand_n.png");
+            var materials = new List<Material> { material };
+            SetMaterialIDs(blockMaterials, materials);
         }
     }
 }

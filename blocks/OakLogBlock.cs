@@ -6,18 +6,17 @@ namespace game.blocks
     {
         public static new BlockType Type { get; } = BlockType.OAK_LOG;
 
-        public OakLogBlock(List<string> blockTextures)
+        public OakLogBlock(List<Material> blockMaterials)
         {
-            var textures = new List<string>
+            var top_bottom_material = new Material("oak_log_top.png", "oak_log_top_n.png");
+            var side_material = new Material("oak_log.png", "oak_log_n.png");
+            var materials = new List<Material> 
             {
-                "assets/textures/oak_log_top.png",
-                "assets/textures/oak_log_top.png",
-                "assets/textures/oak_log.png",
-                "assets/textures/oak_log.png",
-                "assets/textures/oak_log.png",
-                "assets/textures/oak_log.png"
+                top_bottom_material,
+                top_bottom_material,
+                side_material
             };
-            SetTextureIDs(blockTextures, textures);
+            SetMaterialIDs(blockMaterials, materials);
         }
     }
 }

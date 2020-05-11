@@ -6,10 +6,11 @@ namespace game.blocks
     {
         public static new BlockType Type { get; } = BlockType.OAK_LEAVES;
 
-        public OakLeavesBlock(List<string> blockTextures)
+        public OakLeavesBlock(List<Material> blockMaterials)
         {
-            var textures = new List<string> { "assets/textures/oak_leaves.png" };
-            SetTextureIDs(blockTextures, textures);
+            var material = new Material("oak_leaves.png");
+            var materials = new List<Material> { material };
+            SetMaterialIDs(blockMaterials, materials);
         }
     }
 }

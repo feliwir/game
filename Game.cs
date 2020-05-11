@@ -21,9 +21,10 @@ namespace lumos
         private DeviceBuffer _projectionBuffer;
         private DeviceBuffer _viewBuffer;
         private ResourceSet _projViewSet;
-        public Texture BlockTextureArray;
+        public Texture BlockDiffuseTextureArray;
+        public Texture BlockNormalMapArray;
 
-        public List<string> BlockTextures = new List<string> { "assets/textures/default.png" };
+        public List<Material> BlockMaterials = new List<Material> { new Material() };
         public Dictionary<BlockType, Block> BlockTypes = new Dictionary<BlockType, Block>();
         private Dictionary<Tuple<int, int>, Chunk> Chunks = new Dictionary<Tuple<int, int>, Chunk>();
 
@@ -38,13 +39,13 @@ namespace lumos
 
             _camera = new Camera(window.Width, window.Height);
 
-            BlockTypes.Add(StoneBlock.Type, new StoneBlock(BlockTextures));
-            BlockTypes.Add(DirtBlock.Type, new DirtBlock(BlockTextures));
-            BlockTypes.Add(GrassBlock.Type, new GrassBlock(BlockTextures));
-            BlockTypes.Add(SandBlock.Type, new SandBlock(BlockTextures));
-            BlockTypes.Add(CoalOreBlock.Type, new CoalOreBlock(BlockTextures));
-            BlockTypes.Add(OakLogBlock.Type, new OakLogBlock(BlockTextures));
-            BlockTypes.Add(OakLeavesBlock.Type, new OakLeavesBlock(BlockTextures));
+            BlockTypes.Add(StoneBlock.Type, new StoneBlock(BlockMaterials));
+            BlockTypes.Add(DirtBlock.Type, new DirtBlock(BlockMaterials));
+            BlockTypes.Add(GrassBlock.Type, new GrassBlock(BlockMaterials));
+            BlockTypes.Add(SandBlock.Type, new SandBlock(BlockMaterials));
+            BlockTypes.Add(CoalOreBlock.Type, new CoalOreBlock(BlockMaterials));
+            BlockTypes.Add(OakLogBlock.Type, new OakLogBlock(BlockMaterials));
+            BlockTypes.Add(OakLeavesBlock.Type, new OakLeavesBlock(BlockMaterials));
         }
 
         public BlockType GetBlockAt(int x, int y, int z)
@@ -101,7 +102,14 @@ namespace lumos
 
         protected void CreateResources()
         {
-            BlockTextureArray = CreateBlockTextureArray();
+            var blockTextures = new List<string>();
+            foreach (var material in BlockMaterials) blockTextures.Add(material.DiffuseTexture);
+            BlockDiffuseTextureArray = CreateBlockTextureArray(blockTextures);
+
+            var blockNormalmaps = new List<string>();
+            foreach (var material in BlockMaterials) blockNormalmaps.Add(material.NormalMap);
+            BlockNormalMapArray = CreateBlockTextureArray(blockNormalmaps);
+
             _projectionBuffer = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _viewBuffer = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 
@@ -159,14 +167,14 @@ namespace lumos
             _camera.WindowResized(m_window.Width, m_window.Height);
         }
 
-        private Texture CreateBlockTextureArray()
+        private Texture CreateBlockTextureArray(List<string> blockTextures)
         {
             var largestTextureSize = uint.MinValue;
             var textures = new List<ImageSharpTexture>();
 
-            foreach (var textureName in BlockTextures)
+            foreach (var textureName in blockTextures)
             {
-                var texture = new ImageSharpTexture(textureName);
+                var texture = new ImageSharpTexture("assets/textures/" + textureName);
                 textures.Add(texture);
                 largestTextureSize = Math.Max(largestTextureSize, texture.Width);
             }

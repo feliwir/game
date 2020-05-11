@@ -1,14 +1,11 @@
 ﻿using game.blocks;
-using game.trees;
 using lumos;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
 using System.Text;
 using Veldrid;
-using Veldrid.ImageSharp;
 using Veldrid.SPIRV;
 
 namespace game
@@ -86,7 +83,7 @@ namespace game
 
             var vertexLayout = new VertexLayoutDescription(
                         new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
-                        new VertexElementDescription("TexID", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Int1),
+                        new VertexElementDescription("MaterialID", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Int1),
                         new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
                         new VertexElementDescription("FaceDirection", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Int1));
 
@@ -104,7 +101,8 @@ namespace game
             ResourceLayout worldTextureLayout = game.Factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                    new ResourceLayoutElementDescription("SurfaceTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("DiffuseTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("NormalMap", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
                     new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
             m_pipeline = game.Factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
@@ -119,7 +117,8 @@ namespace game
             worldTextureSet = game.Factory.CreateResourceSet(new ResourceSetDescription(
                 worldTextureLayout,
                 m_worldBuffer,
-                game.BlockTextureArray,
+                game.BlockDiffuseTextureArray,
+                game.BlockNormalMapArray,
                 game.GraphicsDevice.Aniso4xSampler));
         }
 
@@ -149,22 +148,22 @@ namespace game
                         var block = game.BlockTypes[blockType];
 
                         var topBlock = y < HEIGHT - 1 ? Blocks[x, y + 1, z] : BlockType.NONE;
-                        if ((int)topBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.TOP), Direction.TOP);
+                        if ((int)topBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.TOP), Direction.TOP);
 
                         var bottomBlock = y > 0 ? Blocks[x, y - 1, z] : BlockType.NONE;
-                        if ((int)bottomBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.BOTTOM), Direction.BOTTOM);
+                        if ((int)bottomBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.BOTTOM), Direction.BOTTOM);
 
                         var westBlock = x > 0 ? Blocks[x - 1, y, z] : game.GetBlockAt(X - 1, y, z);
-                        if ((int)westBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.WEST), Direction.WEST);
+                        if ((int)westBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.WEST), Direction.WEST);
 
                         var eastBlock = x < WIDTH - 1 ? Blocks[x + 1, y, z] : game.GetBlockAt(X + WIDTH, y, z);
-                        if ((int)eastBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.EAST), Direction.EAST);
+                        if ((int)eastBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.EAST), Direction.EAST);
 
                         var northBlock = z < WIDTH - 1 ? Blocks[x, y, z + 1] : game.GetBlockAt(x, y, Z + WIDTH);
-                        if ((int)northBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.NORTH), Direction.NORTH);
+                        if ((int)northBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.NORTH), Direction.NORTH);
 
                         var southBlock = z > 0 ? Blocks[x, y, z - 1] : game.GetBlockAt(x, y, Z - 1);
-                        if ((int)southBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.SOUTH), Direction.SOUTH);
+                        if ((int)southBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.SOUTH), Direction.SOUTH);
                     }
                 }
             }
@@ -290,14 +289,14 @@ namespace game
             public const uint SizeInBytes = 28;
 
             public Vector3 Position;
-            public int TexID;
+            public int MaterialID;
             public Vector2 TexCoords;
             public int FaceDirection;
 
-            public VertexType(Vector3 pos, int texId, Vector2 uv, Direction faceDir)
+            public VertexType(Vector3 pos, int matId, Vector2 uv, Direction faceDir)
             {
                 Position = pos;
-                TexID = texId;
+                MaterialID = matId;
                 TexCoords = uv;
                 FaceDirection = (int)faceDir;
             }
