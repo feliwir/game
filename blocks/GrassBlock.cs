@@ -1,17 +1,23 @@
-﻿using System.Numerics;
+﻿using System.Collections.Generic;
 
 namespace game.blocks
 {
-    public class GrassBlock : BlockMultiTexture
+    public class GrassBlock : Block
     {
-        public GrassBlock(Vector3 position) : base(position)
+        public static new BlockType Type { get; } = BlockType.GRASS;
+
+        protected new List<string> Textures = new List<string>
         {
-            _texNameTop = "assets/grass_top.png";
-            _texNameBottom = "assets/dirt.png";
-            _texNameLeft = "assets/grass_side.png";
-            _texNameRight = "assets/grass_side.png";
-            _texNameBack = "assets/grass_side.png";
-            _texNameFront = "assets/grass_side.png";
+            "assets/textures/grass_top.png",
+            "assets/textures/dirt.png",
+            "assets/textures/grass_side.png",
+            "assets/textures/grass_side.png",
+            "assets/textures/grass_side.png",
+            "assets/textures/grass_side.png"
+        };
+
+        public GrassBlock(List<string> blockTextures) : base(blockTextures)
+        {
         }
     }
 }

@@ -1,12 +1,15 @@
-﻿using System.Numerics;
+﻿using System.Collections.Generic;
 
 namespace game.blocks
 {
     public class DirtBlock : Block
     {
-        public DirtBlock(Vector3 position) : base(position)
+        public static new BlockType Type { get; } = BlockType.DIRT;
+
+        protected new List<string> Textures = new List<string> { "assets/textures/dirt.png" };
+
+        public DirtBlock(List<string> blockTextures) : base(blockTextures)
         {
-            _texName = "assets/dirt.png";
         }
     }
 }

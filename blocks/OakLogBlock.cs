@@ -1,17 +1,23 @@
-﻿using System.Numerics;
+﻿using System.Collections.Generic;
 
 namespace game.blocks
 {
-    public class OakLogBlock : BlockMultiTexture
+    public class OakLogBlock : Block
     {
-        public OakLogBlock(Vector3 position) : base(position)
+        public static new BlockType Type { get; } = BlockType.OAK_LOG;
+
+        protected new List<string> Textures = new List<string>
         {
-            _texNameTop = "assets/log_oak_top.png";
-            _texNameBottom = "assets/log_oak_top.png";
-            _texNameLeft = "assets/log_oak.png";
-            _texNameRight = "assets/log_oak.png";
-            _texNameBack = "assets/log_oak.png";
-            _texNameFront = "assets/log_oak.png";
+            "assets/textures/log_oak_top.png",
+            "assets/textures/log_oak_top.png",
+            "assets/textures/log_oak.png",
+            "assets/textures/log_oak.png",
+            "assets/textures/log_oak.png",
+            "assets/textures/log_oak.png"
+        };
+
+        public OakLogBlock(List<string> blockTextures) : base(blockTextures)
+        {
         }
     }
 }

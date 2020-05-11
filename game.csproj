@@ -16,44 +16,40 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="assets\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="assets\coal_ore.png">
+    <None Update="assets\textures\coal_ore.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\default.png">
+    <None Update="assets\textures\default.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\dirt.png">
+    <None Update="assets\textures\dirt.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="assets\grass.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\grass_side.png">
+    <None Update="assets\textures\grass_side.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\grass_top.png">
+    <None Update="assets\textures\grass_top.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\leaves_oak.png">
+    <None Update="assets\textures\leaves_oak.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\log_oak.png">
+    <None Update="assets\textures\log_oak.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\log_oak_top.png">
+    <None Update="assets\textures\log_oak_top.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\sand.png">
+    <None Update="assets\textures\sand.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\stone.png">
+    <None Update="assets\textures\stone.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="assets\water_still.png">
+    <None Update="assets\textures\water_still.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="shaders\chunk.vert">

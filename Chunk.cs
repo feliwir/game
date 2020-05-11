@@ -15,16 +15,16 @@ namespace game
         private const int WIDTH = 16;
         private const int HEIGHT = 100;
 
-        private int[,,] blocks = new int[WIDTH, HEIGHT, WIDTH];
+        private BlockType[,,] blocks = new BlockType[WIDTH, HEIGHT, WIDTH];
 
         private const int STONE_HEIGHT = 2;
         private const int DIRT_HEIGHT = 1;
 
-        private Pipeline m_pipeline;
-        protected ResourceSet worldTextureSet;
+        private static Pipeline m_pipeline;
+        protected static ResourceSet worldTextureSet;
 
         private Vector3 m_world;
-        private DeviceBuffer m_worldBuffer;
+        private static DeviceBuffer m_worldBuffer;
         private DeviceBuffer indexBuffer;
         private List<ushort> indices = new List<ushort>();
         private DeviceBuffer vertexBuffer;
@@ -34,7 +34,7 @@ namespace game
         {
             m_world = position;
             Generate();
-            CreateResources(game);
+            CreateVertices(game);
         }
 
         private void Generate()
@@ -46,7 +46,7 @@ namespace game
                 {
                     for (var z = 0; z < WIDTH; z++)
                     {
-                        blocks[x, y, z] = 1; // TODO: Use a block type here
+                        blocks[x, y, z] = BlockType.STONE;
                     }
                 }
             }
@@ -58,7 +58,7 @@ namespace game
                 {
                     for (var z = 0; z < WIDTH; z++)
                     {
-                        blocks[x, y, z] = 2; // TODO: Use a block type here
+                        blocks[x, y, z] = BlockType.DIRT;
                     }
                 }
             }
@@ -68,20 +68,14 @@ namespace game
             {
                 for (var z = 0; z < WIDTH; z++)
                 {
-                    blocks[x, STONE_HEIGHT + DIRT_HEIGHT, z] = 3; // TODO: Use a block type here
+                    blocks[x, STONE_HEIGHT + DIRT_HEIGHT, z] = BlockType.GRASS;
                 }
             }
         }
 
-        private void CreateResources(Game game)
+        public static void CreateResources(Game game)
         {
             m_worldBuffer = game.Factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
-
-            CreateVertices(game);
-
-            var textureNames = new List<string> { "assets/stone.png", "assets/dirt.png", "assets/grass_top.png" };
-
-            var textureArray = CreateTextureArray(textureNames, game);
 
             var vertexShaderCode = System.IO.File.ReadAllText("shaders/chunk.vert");
             var fragmentShaderCode = System.IO.File.ReadAllText("shaders/chunk.frag");
@@ -120,72 +114,8 @@ namespace game
             worldTextureSet = game.Factory.CreateResourceSet(new ResourceSetDescription(
                 worldTextureLayout,
                 m_worldBuffer,
-                textureArray,
+                game.BlockTextureArray,
                 game.GraphicsDevice.Aniso4xSampler));
-        }
-
-        private Texture CreateTextureArray(List<string> textureNames, Game game)
-        {
-            var largestTextureSize = uint.MinValue;
-            var textures = new List<ImageSharpTexture>();
-
-            foreach (var textureName in textureNames)
-            {
-                var texture = new ImageSharpTexture(textureName);
-                textures.Add(texture);
-                largestTextureSize = Math.Max(largestTextureSize, texture.Width);
-            }
-
-            var textureArray = game.GraphicsDevice.ResourceFactory.CreateTexture(
-                TextureDescription.Texture2D(
-                    largestTextureSize,
-                    largestTextureSize,
-                    CalculateMipMapCount(largestTextureSize, largestTextureSize),
-                    (uint)textures.Count,
-                    PixelFormat.R8_G8_B8_A8_UNorm,
-                    TextureUsage.Sampled));
-
-
-            var commandList = game.GraphicsDevice.ResourceFactory.CreateCommandList();
-            commandList.Begin();
-
-            var i = 0;
-            foreach (var texture in textures)
-            {
-                var sourceTexture = texture.CreateDeviceTexture(game.GraphicsDevice, game.Factory);
-
-                for (var mipLevel = 0u; mipLevel < texture.MipLevels; mipLevel++)
-                {
-                    commandList.CopyTexture(
-                        sourceTexture,
-                        0, 0, 0,
-                        mipLevel,
-                        0,
-                        textureArray,
-                        0, 0, 0,
-                        mipLevel,
-                        (uint)i,
-                        (uint)texture.Images[mipLevel].Width,
-                        (uint)texture.Images[mipLevel].Height,
-                        1,
-                        1);
-                }
-                i++;
-            }
-
-            commandList.End();
-
-            game.GraphicsDevice.SubmitCommands(commandList);
-            game.GraphicsDevice.DisposeWhenIdle(commandList);
-            game.GraphicsDevice.WaitForIdle();
-
-            return textureArray;
-        }
-
-
-        private static uint CalculateMipMapCount(uint width, uint height)
-        {
-            return 1u + (uint)Math.Floor(Math.Log(Math.Max(width, height), 2));
         }
 
         public void Draw(CommandList cl, ResourceSet projViewSet)
@@ -210,24 +140,25 @@ namespace game
                         if (blockType == 0) continue;
 
                         //TODO: handle neighboring chunks
+                        var block = game.BlockTypes[blockType];
 
                         var topBlock = y < HEIGHT - 1 ? blocks[x, y + 1, z] : 0;
-                        if (topBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Top);
+                        if (topBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.TOP), Direction.TOP);
 
                         var bottomBlock = y > 0 ? blocks[x, y - 1, z] : 0;
-                        if (bottomBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Bottom);
+                        if (bottomBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.BOTTOM), Direction.BOTTOM);
 
                         var leftBlock = x > 0 ? blocks[x - 1, y, z] : 0;
-                        if (leftBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Left);
+                        if (leftBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.WEST), Direction.WEST);
 
                         var rightBlock = x < WIDTH - 1 ? blocks[x + 1, y, z] : 0;
-                        if (rightBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Right);
+                        if (rightBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.EAST), Direction.EAST);
 
                         var backBlock = z < WIDTH - 1 ? blocks[x, y, z + 1] : 0;
-                        if (backBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Back);
+                        if (backBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.NORTH), Direction.NORTH);
 
                         var frontBlock = z > 0 ? blocks[x, y, z - 1] : 0;
-                        if (frontBlock == 0) AddFace(x, y, z, blockType - 1, FaceType.Front);
+                        if (frontBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.SOUTH), Direction.SOUTH);
                     }
                 }
             }
@@ -244,29 +175,29 @@ namespace game
            
         }
 
-        private void AddFace(int x, int y, int z, int texId, FaceType face_type)
+        private void AddFace(int x, int y, int z, int texId, Direction direction)
         {
-            var verts = front_vertices;
+            var verts = south_vertices;
             var offset = new Vector3(x, y, z);
-            switch (face_type)
+            switch (direction)
             {
-                case FaceType.Top:
+                case Direction.TOP:
                     verts = top_vertices;
                     break;
-                case FaceType.Bottom:
+                case Direction.BOTTOM:
                     verts = bottom_vertices;
                     break;
-                case FaceType.Left:
-                    verts = left_vertices;
+                case Direction.WEST:
+                    verts = west_vertices;
                     break;
-                case FaceType.Right:
-                    verts = right_vertices;
+                case Direction.EAST:
+                    verts = east_vertices;
                     break;
-                case FaceType.Back:
-                    verts = back_vertices;
+                case Direction.NORTH:
+                    verts = north_vertices;
                     break;
-                case FaceType.Front:
-                    verts = front_vertices;
+                case Direction.SOUTH:
+                    verts = south_vertices;
                     break;
             }
 
@@ -285,17 +216,7 @@ namespace game
             }
         }
 
-        private enum FaceType
-        {
-            Top,
-            Bottom,
-            Left,
-            Right,
-            Back,
-            Front
-        };
-
-        private List<Vector3> top_vertices = new List<Vector3>
+        private static List<Vector3> top_vertices = new List<Vector3>
         { 
             new Vector3(0f, 1f, 0f),
             new Vector3(1f, 1f, 0f),
@@ -303,7 +224,7 @@ namespace game
             new Vector3(0f, 1f, 1f)
         };
 
-        private List<Vector3> bottom_vertices = new List<Vector3>
+        private static List<Vector3> bottom_vertices = new List<Vector3>
         {
             new Vector3(1f, 0f, 0f),
             new Vector3(0f, 0f, 0f),
@@ -311,44 +232,45 @@ namespace game
             new Vector3(1f, 0f, 1f)
         };
 
-        private List<Vector3> left_vertices = new List<Vector3>
+        private static List<Vector3> west_vertices = new List<Vector3>
         {
-            new Vector3(0f, 0f, 1f),
             new Vector3(0f, 0f, 0f),
             new Vector3(0f, 1f, 0f),
-            new Vector3(0f, 1f, 1f)
+            new Vector3(0f, 1f, 1f),
+            new Vector3(0f, 0f, 1f)
         };
 
-        private List<Vector3> right_vertices = new List<Vector3>
+        private static List<Vector3> east_vertices = new List<Vector3>
         {
-            new Vector3(1f, 0f, 0f),
             new Vector3(1f, 0f, 1f),
             new Vector3(1f, 1f, 1f),
-            new Vector3(1f, 1f, 0f)
+            new Vector3(1f, 1f, 0f),
+            new Vector3(1f, 0f, 0f)
         };
 
-        private List<Vector3> back_vertices = new List<Vector3>
+        private static List<Vector3> north_vertices = new List<Vector3>
         {
-            new Vector3(1f, 0f, 1f),
             new Vector3(0f, 0f, 1f),
             new Vector3(0f, 1f, 1f),
-            new Vector3(1f, 1f, 1f)
+            new Vector3(1f, 1f, 1f),
+            new Vector3(1f, 0f, 1f)
         };
 
-        private List<Vector3> front_vertices = new List<Vector3>
+        private static List<Vector3> south_vertices = new List<Vector3>
         {
-            new Vector3(0f, 0f, 0f),
             new Vector3(1f, 0f, 0f),
             new Vector3(1f, 1f, 0f),
-            new Vector3(0f, 1f, 0f)
+            new Vector3(0f, 1f, 0f),
+            new Vector3(0f, 0f, 0f)
         };
 
-        private List<Vector2> uv_coords = new List<Vector2>
+        private static List<Vector2> uv_coords = new List<Vector2>
         {
+            new Vector2(0, 1),
             new Vector2(0, 0),
             new Vector2(1, 0),
             new Vector2(1, 1),
-            new Vector2(0, 1)
+            
         };
 
         private struct VertexPositionTexture
