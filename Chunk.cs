@@ -4,6 +4,7 @@ using lumos;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
 using Veldrid;
@@ -33,7 +34,7 @@ namespace game
         private DeviceBuffer indexBuffer;
         private List<ushort> indices = new List<ushort>();
         private DeviceBuffer vertexBuffer;
-        private List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
+        private List<VertexType> vertices = new List<VertexType>();
 
         private bool dirty = true;
 
@@ -86,7 +87,8 @@ namespace game
             var vertexLayout = new VertexLayoutDescription(
                         new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                         new VertexElementDescription("TexID", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Int1),
-                        new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
+                        new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
+                        new VertexElementDescription("FaceDirection", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Int1));
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 new VertexLayoutDescription[] { vertexLayout },
@@ -167,7 +169,7 @@ namespace game
                 }
             }
 
-            vertexBuffer = game.Factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * vertices.Count), BufferUsage.VertexBuffer));
+            vertexBuffer = game.Factory.CreateBuffer(new BufferDescription((uint)(VertexType.SizeInBytes * vertices.Count), BufferUsage.VertexBuffer));
             game.GraphicsDevice.UpdateBuffer(vertexBuffer, 0, vertices.ToArray());
 
             indexBuffer = game.Factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)indices.Count, BufferUsage.IndexBuffer));
@@ -220,7 +222,7 @@ namespace game
 
             for (var i = 0; i < 4; i++)
             {
-                vertices.Add(new VertexPositionTexture(verts[i] + offset, texId, uv_coords[i]));
+                vertices.Add(new VertexType(verts[i] + offset, texId, uv_coords[i], direction));
             }
         }
 
@@ -282,27 +284,22 @@ namespace game
             
         };
 
-        private struct VertexPositionTexture
+        [StructLayout(LayoutKind.Sequential)]
+        private struct VertexType
         {
-            public const uint SizeInBytes = 24;
+            public const uint SizeInBytes = 28;
 
-            public float PosX;
-            public float PosY;
-            public float PosZ;
-
+            public Vector3 Position;
             public int TexID;
+            public Vector2 TexCoords;
+            public int FaceDirection;
 
-            public float TexU;
-            public float TexV;
-
-            public VertexPositionTexture(Vector3 pos, int texId, Vector2 uv)
+            public VertexType(Vector3 pos, int texId, Vector2 uv, Direction faceDir)
             {
-                PosX = pos.X;
-                PosY = pos.Y;
-                PosZ = pos.Z;
+                Position = pos;
                 TexID = texId;
-                TexU = uv.X;
-                TexV = uv.Y;
+                TexCoords = uv;
+                FaceDirection = (int)faceDir;
             }
         }
     }

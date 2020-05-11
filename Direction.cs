@@ -2,11 +2,11 @@
 {
     public enum Direction
     {
-        TOP, // positive Y direction
-        BOTTOM, // negative Y direction
-        WEST, // negative X direction
-        EAST, // positive X direction
-        NORTH, // positive Z direction
-        SOUTH // negative Z direction
+        TOP     = 0, // positive Y direction
+        BOTTOM  = 1, // negative Y direction
+        WEST    = 2, // negative X direction
+        EAST    = 3, // positive X direction
+        NORTH   = 4, // positive Z direction
+        SOUTH   = 5, // negative Z direction
     };
 }
