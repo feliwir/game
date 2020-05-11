@@ -8,7 +8,7 @@ namespace game.blocks
 
         public OakLeavesBlock(List<string> blockTextures)
         {
-            var textures = new List<string> { "assets/textures/leaves_oak.png" };
+            var textures = new List<string> { "assets/textures/oak_leaves.png" };
             SetTextureIDs(blockTextures, textures);
         }
     }

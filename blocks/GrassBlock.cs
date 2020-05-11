@@ -10,12 +10,12 @@ namespace game.blocks
         {
             var textures = new List<string>
             {
-                "assets/textures/grass_top.png",
+                "assets/textures/grass_block_top.png",
                 "assets/textures/dirt.png",
-                "assets/textures/grass_side.png",
-                "assets/textures/grass_side.png",
-                "assets/textures/grass_side.png",
-                "assets/textures/grass_side.png"
+                "assets/textures/grass_block_side.png",
+                "assets/textures/grass_block_side.png",
+                "assets/textures/grass_block_side.png",
+                "assets/textures/grass_block_side.png"
             };
             SetTextureIDs(blockTextures, textures);
         }
