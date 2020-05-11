@@ -40,6 +40,18 @@ namespace game
             X = x;
             Z = y;
             m_world = new Vector3(x, 0, y);
+
+            for (var _y = 0; _y < HEIGHT; _y++)
+            {
+                for (var _x = 0; _x < WIDTH; _x++)
+                {
+                    for (var _z = 0; _z < WIDTH; _z++)
+                    {
+                        Blocks[_x, _y, _z] = BlockType.NONE;
+                    }
+                }
+            }
+
             Generate(heightMap, random);
         }
 
@@ -62,12 +74,13 @@ namespace game
             {
                 for (var z = 0; z < WIDTH; z++)
                 {
-                    var height = heightMap[x + (int)m_world.X, z + (int)m_world.Z];
-                    for (var y = STONE_HEIGHT; y < STONE_HEIGHT + DIRT_HEIGHT + height; y++)
+                    int y;
+                    var height = heightMap[x + X, z + Z];
+                    for (y = STONE_HEIGHT; y < STONE_HEIGHT + DIRT_HEIGHT + height; y++)
                     {
                         Blocks[x, y, z] = BlockType.DIRT;
-                        Blocks[x, y + 1, z] = BlockType.GRASS;
                     }
+                    Blocks[x, y, z] = BlockType.GRASS;
                 }
             }
 
@@ -136,6 +149,11 @@ namespace game
 
         private void CreateVertices(Game game)
         {
+            var southChunkPosition = new Tuple<int, int>(X, Z + 1);
+            var northChunkPosition = new Tuple<int, int>(X, Z - 1);
+            var eastChunkPosition = new Tuple<int, int>(X + 1, Z);
+            var westChunkPosition = new Tuple<int, int>(X - 1, Z);
+
             for (var y = 0; y < HEIGHT; y++)
             {
                 for (var x = 0; x < WIDTH; x++)
@@ -153,17 +171,17 @@ namespace game
                         var bottomBlock = y > 0 ? Blocks[x, y - 1, z] : BlockType.NONE;
                         if ((int)bottomBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.BOTTOM), Direction.BOTTOM);
 
-                        var westBlock = x > 0 ? Blocks[x - 1, y, z] : game.GetBlockAt(X - 1, y, z);
+                        var westBlock = x > 0 ? Blocks[x - 1, y, z] : game.GetBlockAt(westChunkPosition, WIDTH - 1, y, z);
                         if ((int)westBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.WEST), Direction.WEST);
 
-                        var eastBlock = x < WIDTH - 1 ? Blocks[x + 1, y, z] : game.GetBlockAt(X + WIDTH, y, z);
+                        var eastBlock = x < WIDTH - 1 ? Blocks[x + 1, y, z] : game.GetBlockAt(eastChunkPosition, 0, y, z);
                         if ((int)eastBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.EAST), Direction.EAST);
 
-                        var northBlock = z < WIDTH - 1 ? Blocks[x, y, z + 1] : game.GetBlockAt(x, y, Z + WIDTH);
-                        if ((int)northBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.NORTH), Direction.NORTH);
-
-                        var southBlock = z > 0 ? Blocks[x, y, z - 1] : game.GetBlockAt(x, y, Z - 1);
+                        var southBlock = z < WIDTH - 1 ? Blocks[x, y, z + 1] : game.GetBlockAt(southChunkPosition, x, y, 0);
                         if ((int)southBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.SOUTH), Direction.SOUTH);
+
+                        var northBlock = z > 0 ? Blocks[x, y, z - 1] : game.GetBlockAt(northChunkPosition, x, y, WIDTH - 1);
+                        if ((int)northBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.NORTH), Direction.NORTH);
                     }
                 }
             }
@@ -259,18 +277,18 @@ namespace game
 
         private static List<Vector3> north_vertices = new List<Vector3>
         {
-            new Vector3(0f, 0f, 1f),
-            new Vector3(0f, 1f, 1f),
-            new Vector3(1f, 1f, 1f),
-            new Vector3(1f, 0f, 1f)
-        };
-
-        private static List<Vector3> south_vertices = new List<Vector3>
-        {
             new Vector3(1f, 0f, 0f),
             new Vector3(1f, 1f, 0f),
             new Vector3(0f, 1f, 0f),
             new Vector3(0f, 0f, 0f)
+        };
+
+        private static List<Vector3> south_vertices = new List<Vector3>
+        {
+            new Vector3(0f, 0f, 1f),
+            new Vector3(0f, 1f, 1f),
+            new Vector3(1f, 1f, 1f),
+            new Vector3(1f, 0f, 1f)
         };
 
         private static List<Vector2> uv_coords = new List<Vector2>

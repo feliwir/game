@@ -16,9 +16,6 @@ namespace game.blocks
             {
                 topMaterial,
                 bottomMaterial,
-                sideMaterial,
-                sideMaterial,
-                sideMaterial,
                 sideMaterial
             };
             SetMaterialIDs(blockMaterials, materials);

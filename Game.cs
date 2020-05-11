@@ -2,7 +2,6 @@
 using game.blocks;
 using System;
 using System.Collections.Generic;
-using System.Numerics;
 using Veldrid;
 using Veldrid.ImageSharp;
 
@@ -48,22 +47,12 @@ namespace lumos
             BlockTypes.Add(OakLeavesBlock.Type, new OakLeavesBlock(BlockMaterials));
         }
 
-        public BlockType GetBlockAt(int x, int y, int z)
+        public BlockType GetBlockAt(Tuple<int, int> blockKey, int x, int y, int z)
         {
-            if (x < 0 || y < 0 || z < 0) return BlockType.STONE;
+            if (!Chunks.ContainsKey(blockKey)) return BlockType.STONE;
 
-            int chunkX = (x / Chunk.WIDTH) * Chunk.WIDTH;
-            int chunkZ = (z / Chunk.WIDTH) * Chunk.WIDTH;
-
-            var key = new Tuple<int, int>(chunkX, chunkZ);
-            if (!Chunks.ContainsKey(key)) return BlockType.STONE;
-
-            var chunk = Chunks[key];
-
-            var blockX = x % Chunk.WIDTH;
-            var blockZ = z % Chunk.WIDTH;
-
-            return chunk.Blocks[blockX, y, blockZ];
+            var chunk = Chunks[blockKey];
+            return chunk.Blocks[x, y, z];
         }
 
         protected void OnGraphicsDeviceCreated(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
@@ -78,7 +67,7 @@ namespace lumos
             FastNoise noise = new FastNoise();
             noise.SetNoiseType(FastNoise.NoiseType.Simplex);
 
-            int size = 1024;
+            int size = 64;
             int delta = 10;
             int[,] heightMap = new int[size, size];
 
