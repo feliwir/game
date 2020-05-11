@@ -7,8 +7,8 @@ namespace game
     public class Camera
     {
         private float _fov = 1f;
-        private float _near = 0.5f;
-        private float _far = 100f;
+        private float _near = 0.2f;
+        private float _far = 1000f;
 
         private Matrix4x4 _viewMatrix;
         private Matrix4x4 _projectionMatrix;

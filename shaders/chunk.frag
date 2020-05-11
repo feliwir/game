@@ -18,6 +18,8 @@ void main()
 
     // Material
     vec4 blockColor = texture(sampler2DArray(DiffuseTexture, SurfaceSampler), vec3(fsin_texCoords, fsin_materialId));
+    fsout_color = blockColor;
+    return;
 
     // calculate ambient term
     float ambientStrength = 0.2;

@@ -50,13 +50,13 @@ namespace lumos
 
         public BlockType GetBlockAt(int x, int y, int z)
         {
-            if (x < 0 || y < 0 || z < 0) return BlockType.NONE;
+            if (x < 0 || y < 0 || z < 0) return BlockType.STONE;
 
             int chunkX = (x / Chunk.WIDTH) * Chunk.WIDTH;
             int chunkZ = (z / Chunk.WIDTH) * Chunk.WIDTH;
 
             var key = new Tuple<int, int>(chunkX, chunkZ);
-            if (!Chunks.ContainsKey(key)) return BlockType.NONE;
+            if (!Chunks.ContainsKey(key)) return BlockType.STONE;
 
             var chunk = Chunks[key];
 
@@ -78,7 +78,7 @@ namespace lumos
             FastNoise noise = new FastNoise();
             noise.SetNoiseType(FastNoise.NoiseType.Simplex);
 
-            int size = 64;
+            int size = 1024;
             int delta = 10;
             int[,] heightMap = new int[size, size];
 

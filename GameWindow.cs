@@ -29,7 +29,7 @@ namespace lumos
 
         public GameWindow(string title)
         {
-            WindowCreateInfo wci = new WindowCreateInfo
+            var wci = new WindowCreateInfo
             {
                 X = 100,
                 Y = 100,
@@ -37,7 +37,26 @@ namespace lumos
                 WindowHeight = 600,
                 WindowTitle = title,
             };
-            m_window = VeldridStartup.CreateWindow(ref wci);
+
+            var options = new GraphicsDeviceOptions(
+               debug: false,
+               swapchainDepthFormat: PixelFormat.R16_UNorm,
+               syncToVerticalBlank: true,
+               resourceBindingModel: ResourceBindingModel.Improved,
+               preferDepthRangeZeroToOne: true,
+               preferStandardClipSpaceYDirection: true);
+
+#if DEBUG
+            options.Debug = true;
+#endif
+
+            VeldridStartup.CreateWindowAndGraphicsDevice(
+                wci,
+                options,
+                GraphicsBackend.Vulkan,
+                out m_window,
+                out m_gd);
+
             m_window.Resized += () =>
             {
                 m_windowResized = true;
@@ -47,19 +66,6 @@ namespace lumos
 
         public void Run()
         {
-
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions(
-                debug: false,
-                swapchainDepthFormat: PixelFormat.R16_UNorm,
-                syncToVerticalBlank: true,
-                resourceBindingModel: ResourceBindingModel.Improved,
-                preferDepthRangeZeroToOne: true,
-                preferStandardClipSpaceYDirection: true);
-
-#if DEBUG
-            options.Debug = true;
-#endif
-            m_gd = VeldridStartup.CreateGraphicsDevice(m_window, options);
             m_factory = new DisposeCollectorResourceFactory(m_gd.ResourceFactory);
             GraphicsDeviceCreated?.Invoke(m_gd, m_factory, m_gd.MainSwapchain);
 
