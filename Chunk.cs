@@ -149,42 +149,7 @@ namespace game
 
         private void CreateVertices(Game game)
         {
-            var southChunkPosition = new Tuple<int, int>(X, Z + 1);
-            var northChunkPosition = new Tuple<int, int>(X, Z - 1);
-            var eastChunkPosition = new Tuple<int, int>(X + 1, Z);
-            var westChunkPosition = new Tuple<int, int>(X - 1, Z);
-
-            for (var y = 0; y < HEIGHT; y++)
-            {
-                for (var x = 0; x < WIDTH; x++)
-                {
-                    for (var z = 0; z < WIDTH; z++)
-                    {
-                        var blockType = Blocks[x, y, z];
-                        if (blockType == BlockType.NONE) continue;
-
-                        var block = game.BlockTypes[blockType];
-
-                        var topBlock = y < HEIGHT - 1 ? Blocks[x, y + 1, z] : BlockType.NONE;
-                        if ((int)topBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.TOP), Direction.TOP);
-
-                        var bottomBlock = y > 0 ? Blocks[x, y - 1, z] : BlockType.NONE;
-                        if ((int)bottomBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.BOTTOM), Direction.BOTTOM);
-
-                        var westBlock = x > 0 ? Blocks[x - 1, y, z] : game.GetBlockAt(westChunkPosition, WIDTH - 1, y, z);
-                        if ((int)westBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.WEST), Direction.WEST);
-
-                        var eastBlock = x < WIDTH - 1 ? Blocks[x + 1, y, z] : game.GetBlockAt(eastChunkPosition, 0, y, z);
-                        if ((int)eastBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.EAST), Direction.EAST);
-
-                        var southBlock = z < WIDTH - 1 ? Blocks[x, y, z + 1] : game.GetBlockAt(southChunkPosition, x, y, 0);
-                        if ((int)southBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.SOUTH), Direction.SOUTH);
-
-                        var northBlock = z > 0 ? Blocks[x, y, z - 1] : game.GetBlockAt(northChunkPosition, x, y, WIDTH - 1);
-                        if ((int)northBlock < 1) AddFace(x, y, z, block.GetMaterialID(Direction.NORTH), Direction.NORTH);
-                    }
-                }
-            }
+            ReduceMesh(game);
 
             vertexBuffer = game.Factory.CreateBuffer(new BufferDescription((uint)(VertexType.SizeInBytes * vertices.Count), BufferUsage.VertexBuffer));
             game.GraphicsDevice.UpdateBuffer(vertexBuffer, 0, vertices.ToArray());
@@ -192,6 +157,191 @@ namespace game
             indexBuffer = game.Factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)indices.Count, BufferUsage.IndexBuffer));
             game.GraphicsDevice.UpdateBuffer(indexBuffer, 0, indices.ToArray());
         }
+
+        private BlockType GetBlockAt(int x, int y, int z, Game game)
+        {
+            var southChunkPosition = new Tuple<int, int>(X, Z + 1);
+            var northChunkPosition = new Tuple<int, int>(X, Z - 1);
+            var eastChunkPosition = new Tuple<int, int>(X + 1, Z);
+            var westChunkPosition = new Tuple<int, int>(X - 1, Z);
+
+            if (y < 0 || y >= HEIGHT) return BlockType.NONE;
+
+            if (x < 0)
+            {
+                return game.GetBlockAt(westChunkPosition, x + WIDTH, y, z);
+            }
+            else if (x >= WIDTH)
+            {
+                return game.GetBlockAt(eastChunkPosition, x - WIDTH, y, z);
+            }
+
+            if (z < 0)
+            {
+                return game.GetBlockAt(northChunkPosition, x, y, z + WIDTH);
+            }
+            else if (z >= WIDTH)
+            {
+                return game.GetBlockAt(southChunkPosition, x, y, z - WIDTH);
+            }
+
+            return Blocks[x, y, z];
+        }
+
+        public void ReduceMesh(Game game)
+        {
+            int[] dimensions = { WIDTH, HEIGHT, WIDTH };
+
+            //Sweep over 3-axes
+            for (var direction = 0; direction < 3; direction++)
+            {
+                int w = 0;
+                int h = 0;
+
+                int u = (direction + 1) % 3;
+                int v = (direction + 2) % 3;
+
+                int[] x = { 0, 0, 0 };
+                int[] q = { 0, 0, 0 };
+                int[] mask = new int[(dimensions[u] + 1) * (dimensions[v] + 1)];
+
+
+                q[direction] = 1;
+
+                for (x[direction] = -1; x[direction] < dimensions[direction];)
+                {
+                    // Compute the mask
+                    int n = 0;
+                    for (x[v] = 0; x[v] < dimensions[v]; ++x[v])
+                    {
+                        for (x[u] = 0; x[u] < dimensions[u]; ++x[u], ++n)
+                        {
+                            int vox1 = (int)GetBlockAt(x[0], x[1], x[2], game);
+                            int vox2 = (int)GetBlockAt(x[0] + q[0], x[1] + q[1], x[2] + q[2], game);
+
+                            int a = 0 <= x[direction] ? vox1 : 0;
+                            int b = x[direction] < dimensions[direction] - 1 ? vox2 : 0;
+
+                            if ((a != 0) == (b != 0)) mask[n] = 0;
+                            else if (a != 0) mask[n] = a;
+                            else mask[n] = -b;
+                        }
+                    }
+
+                    ++x[direction];
+
+                    // Generate mesh for mask using lexicographic ordering
+                    n = 0;
+                    for (var j = 0; j < dimensions[v]; ++j)
+                    {
+                        for (var i = 0; i < dimensions[u];)
+                        {
+                            var block_type = mask[n];
+
+                            if (block_type == 0)
+                            {
+                                ++i;
+                                ++n;
+                                continue;
+                            }
+
+                            // compute width
+                            for (w = 1; mask[n + w] == block_type && (i + w) < dimensions[u]; ++w) { }
+
+                            // compute height
+                            bool done = false;
+                            for (h = 1; (j + h) < dimensions[v]; ++h)
+                            {
+                                for (var k = 0; k < w; ++k)
+                                {
+                                    if (mask[n + k + h * dimensions[u]] != block_type)
+                                    {
+                                        done = true;
+                                        break;
+                                    }
+                                }
+                                if (done)
+                                {
+                                    break;
+                                }
+                            }
+
+                            // add quad
+                            x[u] = i;
+                            x[v] = j;
+
+                            int[] du = { 0, 0, 0 };
+                            int[] dv = { 0, 0, 0 };
+
+                            if (block_type > 0)
+                            {
+                                dv[v] = h;
+                                du[u] = w;
+                            }
+                            else
+                            {
+                                du[v] = h;
+                                dv[u] = w;
+                            }
+
+                            Vector3 v1 = new Vector3(x[0], x[1], x[2]);
+                            Vector3 v2 = new Vector3(x[0] + du[0], x[1] + du[1], x[2] + du[2]);
+                            Vector3 v3 = new Vector3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]);
+                            Vector3 v4 = new Vector3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]);
+
+                            var d_u = 0;
+                            var d_v = 0;
+                            for (var r = 0; r < 3; r++)
+                            {
+                                if (du[r] > d_u) d_u = du[r];
+                                if (dv[r] > d_v) d_v = dv[r];
+                            }
+
+                            var dir = direction;
+                            if (block_type < 0)
+                            {
+                                dir = Math.Abs(block_type) + 3;
+                            }
+
+                            var block = game.BlockTypes[(BlockType)Math.Abs(block_type)];
+                            AddQuad(v1, v2, v3, v4, d_u, d_v, block.GetMaterialID((Direction)dir));
+
+                            for (var l = 0; l < h; ++l)
+                            {
+                                for (var k = 0; k < w; ++k)
+                                {
+                                    mask[n + k + l * dimensions[u]] = 0;
+                                }
+                            }
+
+                            i += w;
+                            n += w;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void AddQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, int d_u, int d_v, int matID)
+        {
+            // TODO: get face direction, blockType and compute uvs
+            int i = vertices.Count;
+            var uv_scale = new Vector2(d_v, d_u);
+
+            vertices.Add(new VertexType(v1, matID, uv_coords[0] * uv_scale, Direction.TOP));
+            vertices.Add(new VertexType(v2, matID, uv_coords[1] * uv_scale, Direction.TOP));
+            vertices.Add(new VertexType(v3, matID, uv_coords[2] * uv_scale, Direction.TOP));
+            vertices.Add(new VertexType(v4, matID, uv_coords[3] * uv_scale, Direction.TOP));
+
+            indices.Add((ushort)(i + 0));
+            indices.Add((ushort)(i + 2));
+            indices.Add((ushort)(i + 1));
+            indices.Add((ushort)(i + 2));
+            indices.Add((ushort)(i + 0));
+            indices.Add((ushort)(i + 3));
+            
+        }
+
 
         public void Update(float deltaSeconds, Game game)
         {
