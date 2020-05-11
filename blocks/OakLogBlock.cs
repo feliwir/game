@@ -6,18 +6,18 @@ namespace game.blocks
     {
         public static new BlockType Type { get; } = BlockType.OAK_LOG;
 
-        protected new List<string> Textures = new List<string>
+        public OakLogBlock(List<string> blockTextures)
         {
-            "assets/textures/log_oak_top.png",
-            "assets/textures/log_oak_top.png",
-            "assets/textures/log_oak.png",
-            "assets/textures/log_oak.png",
-            "assets/textures/log_oak.png",
-            "assets/textures/log_oak.png"
-        };
-
-        public OakLogBlock(List<string> blockTextures) : base(blockTextures)
-        {
+            var textures = new List<string>
+            {
+                "assets/textures/log_oak_top.png",
+                "assets/textures/log_oak_top.png",
+                "assets/textures/log_oak.png",
+                "assets/textures/log_oak.png",
+                "assets/textures/log_oak.png",
+                "assets/textures/log_oak.png"
+            };
+            SetTextureIDs(blockTextures, textures);
         }
     }
 }

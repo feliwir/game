@@ -6,10 +6,10 @@ namespace game.blocks
     {
         public static new BlockType Type { get; } = BlockType.DIRT;
 
-        protected new List<string> Textures = new List<string> { "assets/textures/dirt.png" };
-
-        public DirtBlock(List<string> blockTextures) : base(blockTextures)
+        public DirtBlock(List<string> blockTextures)
         {
+            var textures = new List<string> { "assets/textures/dirt.png" };
+            SetTextureIDs(blockTextures, textures);
         }
     }
 }

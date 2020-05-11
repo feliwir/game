@@ -23,7 +23,7 @@ namespace lumos
         private ResourceSet _projViewSet;
         public Texture BlockTextureArray;
 
-        public List<string> BlockTextures = new List<string>();
+        public List<string> BlockTextures = new List<string> { "assets/textures/default.png" };
         public Dictionary<BlockType, Block> BlockTypes = new Dictionary<BlockType, Block>();
         private List<Chunk> chunks = new List<Chunk>();
 
@@ -55,7 +55,7 @@ namespace lumos
             CreateResources();
 
             Chunk.CreateResources(this);
-            var chunk = new Chunk(this, new Vector3(0, 0, 0));
+            var chunk = new Chunk(this, new Vector3(0, 0, 0), new Random());
             chunks.Add(chunk);
         }
 
@@ -149,6 +149,7 @@ namespace lumos
             {
                 var sourceTexture = texture.CreateDeviceTexture(GraphicsDevice, Factory);
 
+                //TODO: resize texture to largestTextureSize
                 for (var mipLevel = 0u; mipLevel < texture.MipLevels; mipLevel++)
                 {
                     commandList.CopyTexture(

@@ -1,8 +1,10 @@
 ﻿using game.blocks;
+using game.trees;
 using lumos;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using Veldrid;
 using Veldrid.ImageSharp;
@@ -30,14 +32,14 @@ namespace game
         private DeviceBuffer vertexBuffer;
         private List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
 
-        public Chunk(Game game, Vector3 position, int seed = 0)
+        public Chunk(Game game, Vector3 position, Random random)
         {
             m_world = position;
-            Generate();
+            Generate(random);
             CreateVertices(game);
         }
 
-        private void Generate()
+        private void Generate(Random random)
         {
             //create bottom stone blocks
             for (var y = 0; y < STONE_HEIGHT; y++)
@@ -71,6 +73,8 @@ namespace game
                     blocks[x, STONE_HEIGHT + DIRT_HEIGHT, z] = BlockType.GRASS;
                 }
             }
+
+            Tree.Generate(blocks, 8, 4, 8, random);
         }
 
         public static void CreateResources(Game game)
@@ -266,10 +270,11 @@ namespace game
 
         private static List<Vector2> uv_coords = new List<Vector2>
         {
-            new Vector2(0, 1),
+            // using 1.0 causes the grass_side texture to cause a small green stripe
+            new Vector2(0, 0.99f),
             new Vector2(0, 0),
-            new Vector2(1, 0),
-            new Vector2(1, 1),
+            new Vector2(0.99f, 0),
+            new Vector2(0.99f, 0.99f),
             
         };
 

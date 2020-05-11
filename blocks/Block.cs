@@ -7,28 +7,26 @@ namespace game
     {
         public static BlockType Type { get; } = BlockType.NONE;
 
-        protected List<string> Textures = new List<string> { "assets/textures/default.png" };
-
         //those should be static
-        private readonly int TopTextureID;
-        private readonly int BottomTextureID;
-        private readonly int WestTextureID;
-        private readonly int EastTextureID;
-        private readonly int NorthTextureID;
-        private readonly int SouthTextureID;
+        private int TopTextureID;
+        private int BottomTextureID;
+        private int WestTextureID;
+        private int EastTextureID;
+        private int NorthTextureID;
+        private int SouthTextureID;
 
-        public Block (List<string> blockTextures)
+        protected void SetTextureIDs(List<string> blockTextures, List<string> textures)
         {
-            if (Textures.Count == 0) return;
+            if (textures.Count == 0) return;
 
-            while (Textures.Count < 6) Textures.Add(Textures[0]);
+            while (textures.Count < 6) textures.Add(textures[0]);
 
-            TopTextureID = SetTextureID(blockTextures, Textures[0]);
-            BottomTextureID = SetTextureID(blockTextures, Textures[1]);
-            WestTextureID = SetTextureID(blockTextures, Textures[2]);
-            EastTextureID = SetTextureID(blockTextures, Textures[3]);
-            NorthTextureID = SetTextureID(blockTextures, Textures[4]);
-            SouthTextureID = SetTextureID(blockTextures, Textures[5]);
+            TopTextureID = SetTextureID(blockTextures, textures[0]);
+            BottomTextureID = SetTextureID(blockTextures, textures[1]);
+            WestTextureID = SetTextureID(blockTextures, textures[2]);
+            EastTextureID = SetTextureID(blockTextures, textures[3]);
+            NorthTextureID = SetTextureID(blockTextures, textures[4]);
+            SouthTextureID = SetTextureID(blockTextures, textures[5]);
         }
 
         // TODO: make this static
@@ -55,7 +53,10 @@ namespace game
 
         private int SetTextureID(List<string> textures, string textureName)
         {
-            if (textures.Contains(textureName)) return textures.IndexOf(textureName);
+            if (textures.Contains(textureName))
+            {
+                return textures.IndexOf(textureName);
+            }
             else
             {
                 textures.Add(textureName);
