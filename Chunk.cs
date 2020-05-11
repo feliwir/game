@@ -14,13 +14,16 @@ namespace game
 {
     public class Chunk
     {
-        private const int WIDTH = 16;
+        public int X { get; private set; }
+        public int Z { get; private set; }
+
+        public const int WIDTH = 16;
         private const int HEIGHT = 100;
 
-        private BlockType[,,] blocks = new BlockType[WIDTH, HEIGHT, WIDTH];
+        public BlockType[,,] Blocks = new BlockType[WIDTH, HEIGHT, WIDTH];
 
-        private const int STONE_HEIGHT = 2;
-        private const int DIRT_HEIGHT = 1;
+        private const int STONE_HEIGHT = 5;
+        private const int DIRT_HEIGHT = 16;
 
         private static Pipeline m_pipeline;
         protected static ResourceSet worldTextureSet;
@@ -32,14 +35,17 @@ namespace game
         private DeviceBuffer vertexBuffer;
         private List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
 
-        public Chunk(Game game, Vector3 position, Random random)
+        private bool dirty = true;
+
+        public Chunk(int x, int y, int[,] heightMap, Random random)
         {
-            m_world = position;
-            Generate(random);
-            CreateVertices(game);
+            X = x;
+            Z = y;
+            m_world = new Vector3(x, 0, y);
+            Generate(heightMap, random);
         }
 
-        private void Generate(Random random)
+        private void Generate(int[,] heightMap, Random random)
         {
             //create bottom stone blocks
             for (var y = 0; y < STONE_HEIGHT; y++)
@@ -48,33 +54,26 @@ namespace game
                 {
                     for (var z = 0; z < WIDTH; z++)
                     {
-                        blocks[x, y, z] = BlockType.STONE;
+                        Blocks[x, y, z] = BlockType.STONE;
                     }
                 }
             }
 
-            //create dirt
-            for (var y = STONE_HEIGHT; y < STONE_HEIGHT + DIRT_HEIGHT; y++)
-            {
-                for (var x = 0; x < WIDTH; x++)
-                {
-                    for (var z = 0; z < WIDTH; z++)
-                    {
-                        blocks[x, y, z] = BlockType.DIRT;
-                    }
-                }
-            }
-
-            //create grass
+            //create dirt and grass
             for (var x = 0; x < WIDTH; x++)
             {
                 for (var z = 0; z < WIDTH; z++)
                 {
-                    blocks[x, STONE_HEIGHT + DIRT_HEIGHT, z] = BlockType.GRASS;
+                    var height = heightMap[x + (int)m_world.X, z + (int)m_world.Z];
+                    for (var y = STONE_HEIGHT; y < STONE_HEIGHT + DIRT_HEIGHT + height; y++)
+                    {
+                        Blocks[x, y, z] = BlockType.DIRT;
+                        Blocks[x, y + 1, z] = BlockType.GRASS;
+                    }
                 }
             }
 
-            Tree.Generate(blocks, 8, 4, 8, random);
+            //Tree.Generate(blocks, 8, 4, 8, random);
         }
 
         public static void CreateResources(Game game)
@@ -124,6 +123,8 @@ namespace game
 
         public void Draw(CommandList cl, ResourceSet projViewSet)
         {
+            cl.UpdateBuffer(m_worldBuffer, 0, m_world);
+
             cl.SetPipeline(m_pipeline);
             cl.SetVertexBuffer(0, vertexBuffer);
             cl.SetIndexBuffer(indexBuffer, IndexFormat.UInt16);
@@ -140,29 +141,28 @@ namespace game
                 {
                     for (var z = 0; z < WIDTH; z++)
                     {
-                        var blockType = blocks[x, y, z];
-                        if (blockType == 0) continue;
+                        var blockType = Blocks[x, y, z];
+                        if (blockType == BlockType.NONE) continue;
 
-                        //TODO: handle neighboring chunks
                         var block = game.BlockTypes[blockType];
 
-                        var topBlock = y < HEIGHT - 1 ? blocks[x, y + 1, z] : 0;
-                        if (topBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.TOP), Direction.TOP);
+                        var topBlock = y < HEIGHT - 1 ? Blocks[x, y + 1, z] : BlockType.NONE;
+                        if ((int)topBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.TOP), Direction.TOP);
 
-                        var bottomBlock = y > 0 ? blocks[x, y - 1, z] : 0;
-                        if (bottomBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.BOTTOM), Direction.BOTTOM);
+                        var bottomBlock = y > 0 ? Blocks[x, y - 1, z] : BlockType.NONE;
+                        if ((int)bottomBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.BOTTOM), Direction.BOTTOM);
 
-                        var leftBlock = x > 0 ? blocks[x - 1, y, z] : 0;
-                        if (leftBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.WEST), Direction.WEST);
+                        var westBlock = x > 0 ? Blocks[x - 1, y, z] : game.GetBlockAt(X - 1, y, z);
+                        if ((int)westBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.WEST), Direction.WEST);
 
-                        var rightBlock = x < WIDTH - 1 ? blocks[x + 1, y, z] : 0;
-                        if (rightBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.EAST), Direction.EAST);
+                        var eastBlock = x < WIDTH - 1 ? Blocks[x + 1, y, z] : game.GetBlockAt(X + WIDTH, y, z);
+                        if ((int)eastBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.EAST), Direction.EAST);
 
-                        var backBlock = z < WIDTH - 1 ? blocks[x, y, z + 1] : 0;
-                        if (backBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.NORTH), Direction.NORTH);
+                        var northBlock = z < WIDTH - 1 ? Blocks[x, y, z + 1] : game.GetBlockAt(x, y, Z + WIDTH);
+                        if ((int)northBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.NORTH), Direction.NORTH);
 
-                        var frontBlock = z > 0 ? blocks[x, y, z - 1] : 0;
-                        if (frontBlock == 0) AddFace(x, y, z, block.GetTextureID(Direction.SOUTH), Direction.SOUTH);
+                        var southBlock = z > 0 ? Blocks[x, y, z - 1] : game.GetBlockAt(x, y, Z - 1);
+                        if ((int)southBlock < 1) AddFace(x, y, z, block.GetTextureID(Direction.SOUTH), Direction.SOUTH);
                     }
                 }
             }
@@ -174,9 +174,13 @@ namespace game
             game.GraphicsDevice.UpdateBuffer(indexBuffer, 0, indices.ToArray());
         }
 
-        public void Update(float deltaSeconds, CommandList cl)
+        public void Update(float deltaSeconds, Game game)
         {
-           
+            if (dirty)
+            {
+                CreateVertices(game);
+                dirty = false;
+            }
         }
 
         private void AddFace(int x, int y, int z, int texId, Direction direction)

@@ -25,7 +25,7 @@ namespace lumos
 
         public List<string> BlockTextures = new List<string> { "assets/textures/default.png" };
         public Dictionary<BlockType, Block> BlockTypes = new Dictionary<BlockType, Block>();
-        private List<Chunk> chunks = new List<Chunk>();
+        private Dictionary<Tuple<int, int>, Chunk> Chunks = new Dictionary<Tuple<int, int>, Chunk>();
 
         public Game(GameWindow window)
         {
@@ -47,6 +47,24 @@ namespace lumos
             BlockTypes.Add(OakLeavesBlock.Type, new OakLeavesBlock(BlockTextures));
         }
 
+        public BlockType GetBlockAt(int x, int y, int z)
+        {
+            if (x < 0 || y < 0 || z < 0) return BlockType.NONE;
+
+            int chunkX = (x / Chunk.WIDTH) * Chunk.WIDTH;
+            int chunkZ = (z / Chunk.WIDTH) * Chunk.WIDTH;
+
+            var key = new Tuple<int, int>(chunkX, chunkZ);
+            if (!Chunks.ContainsKey(key)) return BlockType.NONE;
+
+            var chunk = Chunks[key];
+
+            var blockX = x % Chunk.WIDTH;
+            var blockZ = z % Chunk.WIDTH;
+
+            return chunk.Blocks[blockX, y, blockZ];
+        }
+
         protected void OnGraphicsDeviceCreated(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
         {
             GraphicsDevice = gd;
@@ -55,8 +73,30 @@ namespace lumos
             CreateResources();
 
             Chunk.CreateResources(this);
-            var chunk = new Chunk(this, new Vector3(0, 0, 0), new Random());
-            chunks.Add(chunk);
+
+            FastNoise noise = new FastNoise();
+            noise.SetNoiseType(FastNoise.NoiseType.Simplex);
+
+            int size = 64;
+            int delta = 10;
+            int[,] heightMap = new int[size, size];
+
+            for (int x = 0; x < size; x++)
+            {
+                for (int y = 0; y < size; y++)
+                {
+                    heightMap[x, y] = (int) (noise.GetNoise(x, y) * delta);
+                }
+            }
+
+            for (int x = 0; x < size; x += Chunk.WIDTH)
+            {
+                for (int y = 0; y < size; y += Chunk.WIDTH)
+                {
+                    var _chunk = new Chunk(x, y, heightMap, new Random());
+                    Chunks.Add(new Tuple<int, int>(x, y), _chunk);
+                }
+            }
         }
 
         protected void CreateResources()
@@ -86,9 +126,9 @@ namespace lumos
         {
             _camera.Update(delta);
 
-            foreach (var chunk in chunks)
+            foreach (var chunk in Chunks.Values)
             {
-                chunk.Update(delta, m_cl);
+                chunk.Update(delta, this);
             }
         }
 
@@ -103,7 +143,7 @@ namespace lumos
             m_cl.ClearColorTarget(0, RgbaFloat.Black);
             m_cl.ClearDepthStencil(1f);
 
-            foreach(var chunk in chunks)
+            foreach(var chunk in Chunks.Values)
             {
                 chunk.Draw(m_cl, _projViewSet);
             }
