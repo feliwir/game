@@ -2,9 +2,7 @@
 
 layout(location = 0) flat in int fsin_materialId;
 layout(location = 1) in vec2 fsin_texCoords;
-layout(location = 2) in vec3 fsin_normalVector;
-layout(location = 3) in vec3 fsin_tangentVector;
-layout(location = 4) in vec3 fsin_bitangentVector;
+layout(location = 2) in vec3 fsin_tbn;
 layout(location = 0) out vec4 fsout_color;
 
 layout(set = 1, binding = 1) uniform texture2DArray DiffuseTexture;
@@ -20,15 +18,19 @@ void main()
 
     // Material
     vec4 blockColor = texture(sampler2DArray(DiffuseTexture, SurfaceSampler), vec3(fsin_texCoords, fsin_materialId));
-    fsout_color = blockColor;
-    return;
 
     // calculate ambient term
     float ambientStrength = 0.2;
     vec3 ambient = ambientStrength * lightColor;
 
-    // calculate diffuse term
-    float diff = 0.8 * max(dot(fsin_normalVector, lightDir), 0.0);
+    // obtain normal from normal map in range [0,1]
+    vec3 normal = texture(sampler2DArray(NormalMap, SurfaceSampler), vec3(fsin_texCoords, fsin_materialId)).rgb;
+    // transform normal vector to range [-1,1]
+    normal = normalize(normal * 2.0 - 1.0);   
+    normal = normalize(fsin_tbn * normal); 
+
+        // calculate diffuse term
+    float diff = 0.8 * clamp(dot(normal, lightDir), 0.0, 1.0);
     vec3 diffuse = diff * lightColor;
 
     vec3 shadingColor = ambient + diffuse;
