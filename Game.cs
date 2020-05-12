@@ -49,7 +49,7 @@ namespace lumos
 
         public BlockType GetBlockAt(Tuple<int, int> blockKey, int x, int y, int z)
         {
-            if (!Chunks.ContainsKey(blockKey)) return BlockType.STONE;
+            if (!Chunks.ContainsKey(blockKey)) return BlockType.DEFAULT;
 
             var chunk = Chunks[blockKey];
             return chunk.Blocks[x, y, z];
@@ -67,7 +67,7 @@ namespace lumos
             FastNoise noise = new FastNoise();
             noise.SetNoiseType(FastNoise.NoiseType.Simplex);
 
-            int size = 64;
+            int size = 16;
             int delta = 10;
             int[,] heightMap = new int[size, size];
 
@@ -161,9 +161,19 @@ namespace lumos
             var largestTextureSize = uint.MinValue;
             var textures = new List<ImageSharpTexture>();
 
+            var defaultTexture = new ImageSharpTexture("assets/textures/default.png");
+
             foreach (var textureName in blockTextures)
             {
-                var texture = new ImageSharpTexture("assets/textures/" + textureName);
+                ImageSharpTexture texture;
+                try
+                {
+                    texture = new ImageSharpTexture("assets/textures/" + textureName);
+                }
+                catch(Exception)
+                {
+                    texture = defaultTexture;
+                }
                 textures.Add(texture);
                 largestTextureSize = Math.Max(largestTextureSize, texture.Width);
             }

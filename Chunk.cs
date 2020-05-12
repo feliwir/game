@@ -41,17 +41,6 @@ namespace game
             Z = y;
             m_world = new Vector3(x, 0, y);
 
-            for (var _y = 0; _y < HEIGHT; _y++)
-            {
-                for (var _x = 0; _x < WIDTH; _x++)
-                {
-                    for (var _z = 0; _z < WIDTH; _z++)
-                    {
-                        Blocks[_x, _y, _z] = BlockType.NONE;
-                    }
-                }
-            }
-
             Generate(heightMap, random);
         }
 
@@ -70,19 +59,19 @@ namespace game
             }
 
             //create dirt and grass
-            for (var x = 0; x < WIDTH; x++)
-            {
-                for (var z = 0; z < WIDTH; z++)
-                {
-                    int y;
-                    var height = heightMap[x + X, z + Z];
-                    for (y = STONE_HEIGHT; y < STONE_HEIGHT + DIRT_HEIGHT + height; y++)
-                    {
-                        Blocks[x, y, z] = BlockType.DIRT;
-                    }
-                    Blocks[x, y, z] = BlockType.GRASS;
-                }
-            }
+            //for (var x = 0; x < WIDTH; x++)
+            //{
+            //    for (var z = 0; z < WIDTH; z++)
+            //    {
+            //        int y;
+            //        var height = heightMap[x + X, z + Z];
+            //        for (y = STONE_HEIGHT; y < STONE_HEIGHT + DIRT_HEIGHT + height; y++)
+            //        {
+            //            Blocks[x, y, z] = BlockType.DIRT;
+            //        }
+            //        Blocks[x, y, z] = BlockType.GRASS;
+            //    }
+            //}
 
             //Tree.Generate(blocks, 8, 4, 8, random);
         }
@@ -165,11 +154,12 @@ namespace game
             var eastChunkPosition = new Tuple<int, int>(X + 1, Z);
             var westChunkPosition = new Tuple<int, int>(X - 1, Z);
 
-            if (y < 0 || y >= HEIGHT) return BlockType.NONE;
+            if (y < 0 || y >= HEIGHT) return BlockType.STONE;
 
             if (x < 0)
             {
-                return game.GetBlockAt(westChunkPosition, x + WIDTH, y, z);
+                var val = game.GetBlockAt(westChunkPosition, x + WIDTH, y, z);
+                return val;
             }
             else if (x >= WIDTH)
             {
@@ -198,13 +188,12 @@ namespace game
                 int w = 0;
                 int h = 0;
 
-                int u = (direction + 1) % 3;
-                int v = (direction + 2) % 3;
+                int dir1 = (direction + 1) % 3;
+                int dir2 = (direction + 2) % 3;
 
-                int[] x = { 0, 0, 0 };
-                int[] q = { 0, 0, 0 };
-                int[] mask = new int[(dimensions[u] + 1) * (dimensions[v] + 1)];
-
+                int[] x = { 0, 0, 0 }; //what is this?
+                int[] q = { 0, 0, 0 }; //what is this?
+                int[] mask = new int[(dimensions[dir1] + 1) * (dimensions[dir2] + 1)];
 
                 q[direction] = 1;
 
@@ -212,12 +201,12 @@ namespace game
                 {
                     // Compute the mask
                     int n = 0;
-                    for (x[v] = 0; x[v] < dimensions[v]; ++x[v])
+                    for (x[dir2] = 0; x[dir2] < dimensions[dir2]; ++x[dir2])
                     {
-                        for (x[u] = 0; x[u] < dimensions[u]; ++x[u], ++n)
+                        for (x[dir1] = 0; x[dir1] < dimensions[dir1]; ++x[dir1], ++n)
                         {
-                            int vox1 = (int)GetBlockAt(x[0], x[1], x[2], game);
-                            int vox2 = (int)GetBlockAt(x[0] + q[0], x[1] + q[1], x[2] + q[2], game);
+                            var vox1 = (int)GetBlockAt(x[0], x[1], x[2], game);
+                            var vox2 = (int)GetBlockAt(x[0] + q[0], x[1] + q[1], x[2] + q[2], game);
 
                             int a = 0 <= x[direction] ? vox1 : 0;
                             int b = x[direction] < dimensions[direction] - 1 ? vox2 : 0;
@@ -232,9 +221,9 @@ namespace game
 
                     // Generate mesh for mask using lexicographic ordering
                     n = 0;
-                    for (var j = 0; j < dimensions[v]; ++j)
+                    for (var j = 0; j < dimensions[dir2]; ++j)
                     {
-                        for (var i = 0; i < dimensions[u];)
+                        for (var i = 0; i < dimensions[dir1];)
                         {
                             var block_type = mask[n];
 
@@ -246,15 +235,15 @@ namespace game
                             }
 
                             // compute width
-                            for (w = 1; mask[n + w] == block_type && (i + w) < dimensions[u]; ++w) { }
+                            for (w = 1; mask[n + w] == block_type && (i + w) < dimensions[dir1]; ++w) { }
 
                             // compute height
                             bool done = false;
-                            for (h = 1; (j + h) < dimensions[v]; ++h)
+                            for (h = 1; (j + h) < dimensions[dir2]; ++h)
                             {
                                 for (var k = 0; k < w; ++k)
                                 {
-                                    if (mask[n + k + h * dimensions[u]] != block_type)
+                                    if (mask[n + k + h * dimensions[dir1]] != block_type)
                                     {
                                         done = true;
                                         break;
@@ -267,21 +256,21 @@ namespace game
                             }
 
                             // add quad
-                            x[u] = i;
-                            x[v] = j;
+                            x[dir1] = i;
+                            x[dir2] = j;
 
                             int[] du = { 0, 0, 0 };
                             int[] dv = { 0, 0, 0 };
 
                             if (block_type > 0)
                             {
-                                dv[v] = h;
-                                du[u] = w;
+                                dv[dir2] = h;
+                                du[dir1] = w;
                             }
                             else
                             {
-                                du[v] = h;
-                                dv[u] = w;
+                                du[dir2] = h;
+                                dv[dir1] = w;
                             }
 
                             Vector3 v1 = new Vector3(x[0], x[1], x[2]);
@@ -310,7 +299,7 @@ namespace game
                             {
                                 for (var k = 0; k < w; ++k)
                                 {
-                                    mask[n + k + l * dimensions[u]] = 0;
+                                    mask[n + k + l * dimensions[dir1]] = 0;
                                 }
                             }
 
