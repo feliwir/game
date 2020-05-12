@@ -3,6 +3,8 @@
 layout(location = 0) flat in int fsin_materialId;
 layout(location = 1) in vec2 fsin_texCoords;
 layout(location = 2) in vec3 fsin_normalVector;
+layout(location = 3) in vec3 fsin_tangentVector;
+layout(location = 4) in vec3 fsin_bitangentVector;
 layout(location = 0) out vec4 fsout_color;
 
 layout(set = 1, binding = 1) uniform texture2DArray DiffuseTexture;

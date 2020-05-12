@@ -22,23 +22,37 @@ layout(location = 3) in int FaceDirection;
 layout(location = 0) out int fsin_materialId;
 layout(location = 1) out vec2 fsin_texCoords;
 layout(location = 2) out vec3 fsin_normalVector;
+layout(location = 3) out vec3 fsin_tangentVector;
+layout(location = 4) out vec3 fsin_bitangentVector;
 
-vec3 getNormalVector()
+void setNormalVectors()
 {
     switch(FaceDirection)
     {
         case 0:
-            return vec3(0.0, -1.0, 0.0);
+            fsin_normalVector = vec3(0.0, -1.0, 0.0);
+            fsin_tangentVector = vec3(-1.0, 0.0, 0.0);
+            fsin_bitangentVector = vec3(0.0, 0.0, -1.0);
         case 1:
-            return vec3(0.0, 1.0, 0.0);
+            fsin_normalVector = vec3(0.0, 1.0, 0.0);
+            fsin_tangentVector = vec3(1.0, 0.0, 0.0);
+            fsin_bitangentVector = vec3(0.0, 0.0, 1.0);
         case 2:
-            return vec3(1.0, 0.0, 0.0);
+            fsin_normalVector = vec3(1.0, 0.0, 0.0);
+            fsin_tangentVector = vec3(0.0, 1.0, 0.0);
+            fsin_bitangentVector = vec3(0.0, 0.0, 1.0);
         case 3:
-            return vec3(-1.0, 0.0, 0.0);
+            fsin_normalVector = vec3(-1.0, 0.0, 0.0);
+            fsin_tangentVector = vec3(0.0, -1.0, 0.0);
+            fsin_bitangentVector = vec3(0.0, 0.0, -1.0);
         case 4:
-            return vec3(0.0, 0.0, 1.0);
+            fsin_normalVector = vec3(0.0, 0.0, 1.0);
+            fsin_tangentVector = vec3(1.0, 0.0, 0.0);
+            fsin_bitangentVector = vec3(0.0, 1.0, 0.0);
         case 5:
-            return vec3(0.0, 0.0, -1.0);
+            fsin_normalVector = vec3(0.0, 0.0, -1.0);
+            fsin_tangentVector = vec3(-1.0, 0.0, 0.0);
+            fsin_bitangentVector = vec3(0.0, -1.0, 0.0);
     }
 }
 
@@ -50,5 +64,5 @@ void main()
     gl_Position = clipPosition;
     fsin_texCoords = TexCoords;
     fsin_materialId = MaterialID;
-    fsin_normalVector = getNormalVector();
+    setNormalVectors();
 }
