@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace game
+namespace Viking
 {
     public class Material
     {

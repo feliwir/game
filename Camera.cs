@@ -2,7 +2,7 @@
 using System.Numerics;
 using Veldrid;
 
-namespace game
+namespace Viking
 {
     public class Camera
     {

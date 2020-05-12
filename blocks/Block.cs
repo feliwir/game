@@ -1,8 +1,7 @@
-﻿using game.blocks;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace game
+namespace Viking.Blocks
 {
     public abstract class Block
     {
@@ -33,7 +32,7 @@ namespace game
         // TODO: make this static
         public int GetMaterialID(Direction direction)
         {
-            switch(direction)
+            switch (direction)
             {
                 case Direction.TOP:
                     return TopMaterialID;

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace game.blocks
+namespace Viking.Blocks
 {
     public class OakLogBlock : Block
     {
@@ -10,7 +10,7 @@ namespace game.blocks
         {
             var top_bottom_material = new Material("oak_log_top.png", "oak_log_top_n.png");
             var side_material = new Material("oak_log.png", "oak_log_n.png");
-            var materials = new List<Material> 
+            var materials = new List<Material>
             {
                 top_bottom_material,
                 top_bottom_material,

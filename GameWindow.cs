@@ -1,14 +1,11 @@
-﻿using game;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
-using System.Text;
 using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 using Veldrid.Utilities;
 
-namespace lumos
+namespace Viking
 {
     public class GameWindow
     {
@@ -41,7 +38,7 @@ namespace lumos
             var options = new GraphicsDeviceOptions(
                debug: false,
                swapchainDepthFormat: PixelFormat.R16_UNorm,
-               syncToVerticalBlank: true,
+               syncToVerticalBlank: false,
                resourceBindingModel: ResourceBindingModel.Improved,
                preferDepthRangeZeroToOne: true,
                preferStandardClipSpaceYDirection: true);
@@ -53,7 +50,7 @@ namespace lumos
             VeldridStartup.CreateWindowAndGraphicsDevice(
                 wci,
                 options,
-                GraphicsBackend.Vulkan,
+                VeldridStartup.GetPlatformDefaultBackend(),
                 out m_window,
                 out m_gd);
 

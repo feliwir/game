@@ -1,4 +1,4 @@
-﻿namespace game.blocks
+﻿namespace Viking.Blocks
 {
     public enum BlockType
     {
