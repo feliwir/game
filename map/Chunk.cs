@@ -144,10 +144,10 @@ namespace Viking.Map
 
         internal BlockType GetBlockAt(int x, int y, int z, Game game)
         {
-            var southChunkPosition = new Tuple<int, int>(X, Z + 1);
-            var northChunkPosition = new Tuple<int, int>(X, Z - 1);
-            var eastChunkPosition = new Tuple<int, int>(X + 1, Z);
-            var westChunkPosition = new Tuple<int, int>(X - 1, Z);
+            var southChunkPosition = new Tuple<int, int>(X, Z + WIDTH);
+            var northChunkPosition = new Tuple<int, int>(X, Z - WIDTH);
+            var eastChunkPosition = new Tuple<int, int>(X + WIDTH, Z);
+            var westChunkPosition = new Tuple<int, int>(X - WIDTH, Z);
 
             if (y < 0 || y >= HEIGHT) return BlockType.NONE;
 

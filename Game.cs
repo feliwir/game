@@ -47,11 +47,11 @@ namespace Viking
             BlockTypes.Add(OakLeavesBlock.Type, new OakLeavesBlock(BlockMaterials));
         }
 
-        public BlockType GetBlockAt(Tuple<int, int> blockKey, int x, int y, int z)
+        public BlockType GetBlockAt(Tuple<int, int> chunkKey, int x, int y, int z)
         {
-            if (!Chunks.ContainsKey(blockKey)) return BlockType.DEFAULT;
+            if (!Chunks.ContainsKey(chunkKey)) return BlockType.DEFAULT;
 
-            var chunk = Chunks[blockKey];
+            var chunk = Chunks[chunkKey];
             return chunk.Blocks[x, y, z];
         }
 
@@ -67,7 +67,7 @@ namespace Viking
             FastNoise noise = new FastNoise();
             noise.SetNoiseType(FastNoise.NoiseType.Simplex);
 
-            int size = 16;
+            int size = 64;
             int delta = 10;
             int[,] heightMap = new int[size, size];
 
