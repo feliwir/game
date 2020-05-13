@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace game.blocks
+namespace Viking.Blocks
 {
     public class StoneBlock : Block
     {

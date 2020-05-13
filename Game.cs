@@ -1,11 +1,11 @@
-﻿using game;
-using game.blocks;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Veldrid;
 using Veldrid.ImageSharp;
+using Viking.Blocks;
+using Viking.Map;
 
-namespace lumos
+namespace Viking
 {
     public class Game
     {
@@ -75,7 +75,7 @@ namespace lumos
             {
                 for (int y = 0; y < size; y++)
                 {
-                    heightMap[x, y] = (int) (noise.GetNoise(x, y) * delta);
+                    heightMap[x, y] = (int)(noise.GetNoise(x, y) * delta);
                 }
             }
 
@@ -140,7 +140,7 @@ namespace lumos
             m_cl.ClearColorTarget(0, RgbaFloat.Black);
             m_cl.ClearDepthStencil(1f);
 
-            foreach(var chunk in Chunks.Values)
+            foreach (var chunk in Chunks.Values)
             {
                 chunk.Draw(m_cl, _projViewSet);
             }

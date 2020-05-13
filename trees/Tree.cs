@@ -1,8 +1,7 @@
-﻿
-using game.blocks;
-using System;
+﻿using System;
+using Viking.Blocks;
 
-namespace game.trees
+namespace Viking.Map
 {
     public abstract class Tree
     {
@@ -13,7 +12,7 @@ namespace game.trees
             {
                 blocks[x, y + i, z] = BlockType.OAK_LOG;
             }
-            
+
             blocks[x, y + height + 0, z] = BlockType.OAK_LEAVES;
             blocks[x, y + height + 1, z] = BlockType.OAK_LEAVES;
             blocks[x, y + height + 2, z] = BlockType.OAK_LEAVES;

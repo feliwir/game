@@ -1,12 +1,12 @@
 ﻿using System;
 
-namespace lumos
+namespace Viking
 {
     class Program
     {
         static void Main(string[] args)
         {
-            GameWindow window = new GameWindow("lumos");
+            GameWindow window = new GameWindow("Viking");
             new Game(window);
             window.Run();
         }
