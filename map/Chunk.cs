@@ -36,17 +36,6 @@ namespace Viking.Map
             Generator = new MeshGenerator();
             m_world = new Vector3(x, 0, y);
 
-            for (var _y = 0; _y < HEIGHT; _y++)
-            {
-                for (var _x = 0; _x < WIDTH; _x++)
-                {
-                    for (var _z = 0; _z < WIDTH; _z++)
-                    {
-                        Blocks[_x, _y, _z] = BlockType.NONE;
-                    }
-                }
-            }
-
             Generate(heightMap, random);
         }
 

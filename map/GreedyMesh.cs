@@ -34,15 +34,37 @@ namespace Viking.Map
                     {
                         for (x[u] = 0; x[u] < dimensions[u]; ++x[u], ++n)
                         {
+                            if (x[direction] < 0 || dimensions[direction] - 1 <= x[direction])
+                            {
+                                mask[n] = 0;
+                                continue;
+                            }
+
+                            var x1 = x[0];
+                            var y1 = x[1];
+                            var z1 = x[2];
+
+                            var x2 = x[0] + q[0];
+                            var y2 = x[1] + q[1];
+                            var z2 = x[2] + q[2];
                             int vox1 = (int)chunk.GetBlockAt(x[0], x[1], x[2], game);
                             int vox2 = (int)chunk.GetBlockAt(x[0] + q[0], x[1] + q[1], x[2] + q[2], game);
 
                             int a = 0 <= x[direction] ? vox1 : 0;
                             int b = x[direction] < dimensions[direction] - 1 ? vox2 : 0;
 
-                            if ((a != 0) == (b != 0)) mask[n] = 0;
-                            else if (a != 0) mask[n] = a;
-                            else mask[n] = -b;
+                            if ((a != 0) == (b != 0))
+                            {
+                                mask[n] = 0;
+                            }
+                            else if (a != 0)
+                            {
+                                mask[n] = a;
+                            }
+                            else
+                            {
+                                mask[n] = -b;
+                            }
                         }
                     }
 
@@ -78,10 +100,7 @@ namespace Viking.Map
                                         break;
                                     }
                                 }
-                                if (done)
-                                {
-                                    break;
-                                }
+                                if (done) break;
                             }
 
                             // add quad
