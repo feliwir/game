@@ -13,7 +13,7 @@ namespace Viking
         private Matrix4x4 _viewMatrix;
         private Matrix4x4 _projectionMatrix;
 
-        private Vector3 _position = new Vector3(-10, 10, -10);
+        private Vector3 _position = new Vector3(-10, 30, -10);
         private Vector3 _lookDirection;
         private float _moveSpeed = 10.0f;
 

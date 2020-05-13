@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Veldrid;
 using Veldrid.ImageSharp;
 using Viking.Blocks;
@@ -67,7 +68,7 @@ namespace Viking
             FastNoise noise = new FastNoise();
             noise.SetNoiseType(FastNoise.NoiseType.Simplex);
 
-            int size = 64;
+            int size = 256;
             int delta = 10;
             int[,] heightMap = new int[size, size];
 
@@ -123,10 +124,10 @@ namespace Viking
         {
             _camera.Update(delta);
 
-            foreach (var chunk in Chunks.Values)
+            Parallel.ForEach(Chunks.Values, (chunk) =>
             {
                 chunk.Update(delta, this);
-            }
+            });
         }
 
         void OnDraw(float deltaSeconds)
