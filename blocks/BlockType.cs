@@ -1,8 +1,9 @@
-﻿namespace game.blocks
+﻿namespace Viking.Blocks
 {
     public enum BlockType
     {
-        NONE,
+        DEFAULT = -1,
+        NONE = 0,
         STONE,
         DIRT,
         GRASS,

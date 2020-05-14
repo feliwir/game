@@ -1,11 +1,12 @@
-﻿using game;
-using game.blocks;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Veldrid;
 using Veldrid.ImageSharp;
+using Viking.Blocks;
+using Viking.Map;
 
-namespace lumos
+namespace Viking
 {
     public class Game
     {
@@ -47,11 +48,11 @@ namespace lumos
             BlockTypes.Add(OakLeavesBlock.Type, new OakLeavesBlock(BlockMaterials));
         }
 
-        public BlockType GetBlockAt(Tuple<int, int> blockKey, int x, int y, int z)
+        public BlockType GetBlockAt(Tuple<int, int> chunkKey, int x, int y, int z)
         {
-            if (!Chunks.ContainsKey(blockKey)) return BlockType.STONE;
+            if (!Chunks.ContainsKey(chunkKey)) return BlockType.DEFAULT;
 
-            var chunk = Chunks[blockKey];
+            var chunk = Chunks[chunkKey];
             return chunk.Blocks[x, y, z];
         }
 
@@ -67,7 +68,7 @@ namespace lumos
             FastNoise noise = new FastNoise();
             noise.SetNoiseType(FastNoise.NoiseType.Simplex);
 
-            int size = 64;
+            int size = 256;
             int delta = 10;
             int[,] heightMap = new int[size, size];
 
@@ -75,7 +76,7 @@ namespace lumos
             {
                 for (int y = 0; y < size; y++)
                 {
-                    heightMap[x, y] = (int) (noise.GetNoise(x, y) * delta);
+                    heightMap[x, y] = (int)(noise.GetNoise(x, y) * delta);
                 }
             }
 
@@ -123,10 +124,10 @@ namespace lumos
         {
             _camera.Update(delta);
 
-            foreach (var chunk in Chunks.Values)
+            Parallel.ForEach(Chunks.Values, (chunk) =>
             {
                 chunk.Update(delta, this);
-            }
+            });
         }
 
         void OnDraw(float deltaSeconds)
@@ -140,7 +141,7 @@ namespace lumos
             m_cl.ClearColorTarget(0, RgbaFloat.Black);
             m_cl.ClearDepthStencil(1f);
 
-            foreach(var chunk in Chunks.Values)
+            foreach (var chunk in Chunks.Values)
             {
                 chunk.Draw(m_cl, _projViewSet);
             }
@@ -161,9 +162,19 @@ namespace lumos
             var largestTextureSize = uint.MinValue;
             var textures = new List<ImageSharpTexture>();
 
+            var defaultTexture = new ImageSharpTexture("assets/textures/default.png");
+
             foreach (var textureName in blockTextures)
             {
-                var texture = new ImageSharpTexture("assets/textures/" + textureName);
+                ImageSharpTexture texture;
+                try
+                {
+                    texture = new ImageSharpTexture("assets/textures/" + textureName);
+                }
+                catch(Exception)
+                {
+                    texture = defaultTexture;
+                }
                 textures.Add(texture);
                 largestTextureSize = Math.Max(largestTextureSize, texture.Width);
             }
