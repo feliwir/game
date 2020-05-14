@@ -108,8 +108,8 @@ namespace Viking.Map
                             }
                             else
                             {
-                                du[v] = h;
                                 dv[u] = w;
+                                du[v] = h;
                             }
 
                             var v1 = new Vector3(x[0], x[1], x[2]);
@@ -117,26 +117,25 @@ namespace Viking.Map
                             var v3 = new Vector3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]);
                             var v4 = new Vector3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]);
 
-                            // TODO: this should be somehow retrievable from logic
-                            var dir = Direction.DOWN;
-                            var normal = Vector3.Cross(v2 - v1, v3 - v1);
-                            if (normal.X > 0) dir = Direction.EAST;
-                            else if (normal.X < 0) dir = Direction.WEST;
-                            else if (normal.Y > 0) dir = Direction.UP;
-                            else if (normal.Y < 0) dir = Direction.DOWN;
-                            else if (normal.Z > 0) dir = Direction.SOUTH;
-                            else if (normal.Z < 0) dir = Direction.NORTH;
-
-                            var d_u = 0;
-                            var d_v = 0;
-                            for (var r = 0; r < 3; r++)
-                            {
-                                if (du[r] > d_u) d_u = du[r];
-                                if (dv[r] > d_v) d_v = dv[r];
-                            }
-
                             var block = game.BlockTypes[(BlockType)Math.Abs(block_type)];
-                            chunk.Generator.AddQuad(v1, v2, v3, v4, d_u, d_v, block.GetMaterialID((Direction)dir));
+
+                            // TODO: find a FASTER way to get the direction
+                            var d_u = v2 - v1;
+                            var d_v = v3 - v1;
+                            var normal = Vector3.Cross(d_u, d_v);
+
+                            if (normal.X > 0)
+                                chunk.Generator.AddQuad(v4, v1, v2, v3, d_u.Y, d_v.Z, Direction.EAST, block.GetMaterialID(Direction.EAST));
+                            else if (normal.X < 0)
+                                chunk.Generator.AddQuad(v1, v2, v3, v4, d_v.Y, d_u.Z, Direction.WEST, block.GetMaterialID(Direction.WEST));
+                            else if (normal.Y > 0)
+                                chunk.Generator.AddQuad(v4, v1, v2, v3, d_u.Z, d_v.X, Direction.UP, block.GetMaterialID(Direction.UP));
+                            else if (normal.Y < 0)
+                                chunk.Generator.AddQuad(v1, v2, v3, v4, d_u.X, d_v.Z, Direction.DOWN, block.GetMaterialID(Direction.DOWN));
+                            else if (normal.Z > 0)
+                                chunk.Generator.AddQuad(v1, v2, v3, v4, d_v.Y, d_u.X, Direction.SOUTH, block.GetMaterialID(Direction.SOUTH));
+                            else if (normal.Z < 0)
+                                chunk.Generator.AddQuad(v4, v1, v2, v3, d_u.Y, d_v.X, Direction.NORTH, block.GetMaterialID(Direction.NORTH));
 
                             for (var l = 0; l < h; ++l)
                             {

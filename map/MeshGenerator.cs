@@ -23,16 +23,15 @@ namespace Viking.Map
             m_vertices.Clear();
         }
 
-        public void AddQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, int d_u, int d_v, int matID)
+        public void AddQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, float d_u, float d_v, Direction dir, int matID)
         {
-            // TODO: get face direction, blockType and compute uvs
             int i = m_vertices.Count;
             var uv_scale = new Vector2(d_v, d_u);
 
-            m_vertices.Add(new VertexType(v1, matID, UvCoords[0] * uv_scale, Direction.UP));
-            m_vertices.Add(new VertexType(v2, matID, UvCoords[1] * uv_scale, Direction.UP));
-            m_vertices.Add(new VertexType(v3, matID, UvCoords[2] * uv_scale, Direction.UP));
-            m_vertices.Add(new VertexType(v4, matID, UvCoords[3] * uv_scale, Direction.UP));
+            m_vertices.Add(new VertexType(v1, matID, UvCoords[0] * uv_scale, dir));
+            m_vertices.Add(new VertexType(v2, matID, UvCoords[1] * uv_scale, dir));
+            m_vertices.Add(new VertexType(v3, matID, UvCoords[2] * uv_scale, dir));
+            m_vertices.Add(new VertexType(v4, matID, UvCoords[3] * uv_scale, dir));
 
             m_indices.Add((ushort)(i + 0));
             m_indices.Add((ushort)(i + 2));
@@ -41,6 +40,8 @@ namespace Viking.Map
             m_indices.Add((ushort)(i + 0));
             m_indices.Add((ushort)(i + 3));
         }
+
+        // keep these for now for 'STUPID MESH CREATION'
 
         private static List<Vector3> TopVertices = new List<Vector3>
         {
@@ -90,13 +91,13 @@ namespace Viking.Map
             new Vector3(1f, 0f, 1f)
         };
 
-        private static List<Vector2> UvCoords = new List<Vector2>
+        private static readonly List<Vector2> UvCoords = new List<Vector2>
         {
-            // using 1.0 causes the grass_side texture to cause a small green stripe
-            new Vector2(0, 0.99f),
+            new Vector2(0, 1),
+            new Vector2(1, 1),
+            new Vector2(1, 0),
             new Vector2(0, 0),
-            new Vector2(0.99f, 0),
-            new Vector2(0.99f, 0.99f),
+            
         };
     }
 }

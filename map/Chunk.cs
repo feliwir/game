@@ -53,7 +53,7 @@ namespace Viking.Map
                 }
             }
 
-            //create dirt and grass
+            // create dirt and grass
             for (var x = 0; x < WIDTH; x++)
             {
                 for (var z = 0; z < WIDTH; z++)
@@ -105,7 +105,8 @@ namespace Viking.Map
             Pipeline = game.Factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
                 DepthStencilStateDescription.DepthOnlyLessEqual,
-                RasterizerStateDescription.Default,
+                new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
+                //new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Wireframe, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
                 shaderSet,
                 new[] { projViewLayout, worldTextureLayout },
