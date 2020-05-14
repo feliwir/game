@@ -39,7 +39,7 @@ namespace Viking
                debug: false,
                swapchainDepthFormat: PixelFormat.R16_UNorm,
                syncToVerticalBlank: false,
-               resourceBindingModel: ResourceBindingModel.Improved,
+               resourceBindingModel: ResourceBindingModel.Default,
                preferDepthRangeZeroToOne: true,
                preferStandardClipSpaceYDirection: true);
 
@@ -50,7 +50,7 @@ namespace Viking
             VeldridStartup.CreateWindowAndGraphicsDevice(
                 wci,
                 options,
-                VeldridStartup.GetPlatformDefaultBackend(),
+                GraphicsBackend.OpenGL,// VeldridStartup.GetPlatformDefaultBackend(),
                 out m_window,
                 out m_gd);
 

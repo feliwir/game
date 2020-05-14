@@ -95,10 +95,12 @@ namespace Viking
             var blockTextures = new List<string>();
             foreach (var material in BlockMaterials) blockTextures.Add(material.DiffuseTexture);
             BlockDiffuseTextureArray = CreateBlockTextureArray(blockTextures);
+            BlockDiffuseTextureArray.Name = "DiffuseTextures";
 
             var blockNormalmaps = new List<string>();
             foreach (var material in BlockMaterials) blockNormalmaps.Add(material.NormalMap);
             BlockNormalMapArray = CreateBlockTextureArray(blockNormalmaps);
+            BlockNormalMapArray.Name = "NormalTextures";
 
             _projectionBuffer = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _viewBuffer = Factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));

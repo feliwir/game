@@ -21,9 +21,9 @@ layout(location = 2) in vec2 TexCoords;
 layout(location = 3) in int FaceDirection;
 layout(location = 0) out int fsin_materialId;
 layout(location = 1) out vec2 fsin_texCoords;
-layout(location = 2) out mat3 fsin_tbn;
+layout(location = 2) out vec3 fsin_ld_ts;
 
-void setNormalVectors()
+mat3 getTBNMatrix()
 {
     vec3 normal = vec3(0);
     vec3 tangent = vec3(0);
@@ -51,7 +51,16 @@ void setNormalVectors()
     }
 
     vec3 bitangent = cross(normal, tangent);
-    fsin_tbn = transpose(mat3(tangent, bitangent, normal));
+    mat3 mv3x3 = mat3( View);
+    vec3 tangent_cs = mv3x3 * tangent;
+    vec3 bitangent_cs = mv3x3 * bitangent;
+    vec3 normal_cs = mv3x3 * normal;
+
+    return transpose(mat3(
+            tangent_cs, 
+            bitangent_cs, 
+            normal_cs
+    ));
 }
 
 void main()
@@ -62,5 +71,8 @@ void main()
     gl_Position = clipPosition;
     fsin_texCoords = TexCoords;
     fsin_materialId = MaterialID;
-    setNormalVectors();
+    mat3 tbn = getTBNMatrix();
+    mat3 mv3x3 = mat3( View);
+    vec3 ld_cs =  normalize(vec3(0.0, 0.0, 1.0));
+    fsin_ld_ts = tbn * normalize(ld_cs);
 }
