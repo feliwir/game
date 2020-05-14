@@ -29,10 +29,10 @@ namespace Viking.Map
             int i = m_vertices.Count;
             var uv_scale = new Vector2(d_v, d_u);
 
-            m_vertices.Add(new VertexType(v1, matID, UvCoords[0] * uv_scale, Direction.TOP));
-            m_vertices.Add(new VertexType(v2, matID, UvCoords[1] * uv_scale, Direction.TOP));
-            m_vertices.Add(new VertexType(v3, matID, UvCoords[2] * uv_scale, Direction.TOP));
-            m_vertices.Add(new VertexType(v4, matID, UvCoords[3] * uv_scale, Direction.TOP));
+            m_vertices.Add(new VertexType(v1, matID, UvCoords[0] * uv_scale, Direction.UP));
+            m_vertices.Add(new VertexType(v2, matID, UvCoords[1] * uv_scale, Direction.UP));
+            m_vertices.Add(new VertexType(v3, matID, UvCoords[2] * uv_scale, Direction.UP));
+            m_vertices.Add(new VertexType(v4, matID, UvCoords[3] * uv_scale, Direction.UP));
 
             m_indices.Add((ushort)(i + 0));
             m_indices.Add((ushort)(i + 2));

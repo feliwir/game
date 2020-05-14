@@ -34,9 +34,9 @@ namespace Viking.Blocks
         {
             switch (direction)
             {
-                case Direction.TOP:
+                case Direction.UP:
                     return TopMaterialID;
-                case Direction.BOTTOM:
+                case Direction.DOWN:
                     return BottomMaterialID;
                 case Direction.WEST:
                     return WestMaterialID;
