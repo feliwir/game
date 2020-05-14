@@ -26,16 +26,16 @@ layout(location = 2) out vec3 fsin_ld_ts;
 mat3 getTBNMatrix()
 {
     vec3 normal = vec3(0);
-    vec3 tangent = vec3(0);
+    vec3 tangent = vec3(1);
 
     switch(FaceDirection)
     {
         case 0:
-            normal = vec3(0.0, -1.0, 0.0);
-            tangent = vec3(-1.0, 0.0, 0.0);
-        case 1:
             normal = vec3(0.0, 1.0, 0.0);
             tangent = vec3(1.0, 0.0, 0.0);
+        case 1:
+            normal = vec3(0.0, -1.0, 0.0);
+            tangent = vec3(-1.0, 0.0, 0.0);
         case 2:
             normal = vec3(1.0, 0.0, 0.0);
             tangent = vec3(0.0, 1.0, 0.0);
@@ -51,16 +51,7 @@ mat3 getTBNMatrix()
     }
 
     vec3 bitangent = cross(normal, tangent);
-    mat3 mv3x3 = mat3( View);
-    vec3 tangent_cs = mv3x3 * tangent;
-    vec3 bitangent_cs = mv3x3 * bitangent;
-    vec3 normal_cs = mv3x3 * normal;
-
-    return transpose(mat3(
-            tangent_cs, 
-            bitangent_cs, 
-            normal_cs
-    ));
+    return mat3(tangent, bitangent, normal);
 }
 
 void main()
@@ -72,7 +63,6 @@ void main()
     fsin_texCoords = TexCoords;
     fsin_materialId = MaterialID;
     mat3 tbn = getTBNMatrix();
-    mat3 mv3x3 = mat3( View);
-    vec3 ld_cs =  normalize(vec3(0.0, 0.0, 1.0));
-    fsin_ld_ts = tbn * normalize(ld_cs);
+    vec3 ld_cs =  normalize(vec3(0.2, -0.7, 0.2));
+    fsin_ld_ts = tbn * ld_cs;
 }

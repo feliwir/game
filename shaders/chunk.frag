@@ -12,7 +12,7 @@ layout(set = 1, binding = 3) uniform sampler SurfaceSampler;
 void main()
 {
     // Light
-    vec3 lightDir = normalize(fsin_ld_ts);
+    vec3 lightDir = fsin_ld_ts; //normalize(vec3(0.2, -0.7, 0.2));
     vec3 lightColor = vec3(0.9, 1.0, 0.9);
 
     // Material
@@ -25,12 +25,12 @@ void main()
     // obtain normal from normal map in range [0,1]
     vec3 normal = texture(sampler2DArray(NormalMap, SurfaceSampler), vec3(fsin_texCoords, fsin_materialId)).rgb;
     // transform normal vector to range [-1,1]
-    normal = normalize(normal * 2.0 - 1.0);   
+    normal = normalize(normal * 2.0 - 1.0);
 
     // calculate diffuse term
     float diff = 0.8 * clamp(dot(normal, lightDir), 0.0, 1.0);
     vec3 diffuse = diff * lightColor;
 
     vec3 shadingColor = ambient + diffuse;
-    fsout_color = vec4(shadingColor, 1.0);// * blockColor;
+    fsout_color = vec4(shadingColor, 1.0) * 5.0 * blockColor;
 }

@@ -50,7 +50,7 @@ namespace Viking
             VeldridStartup.CreateWindowAndGraphicsDevice(
                 wci,
                 options,
-                GraphicsBackend.OpenGL,// VeldridStartup.GetPlatformDefaultBackend(),
+                GraphicsBackend.Vulkan, // VeldridStartup.GetPlatformDefaultBackend(),
                 out m_window,
                 out m_gd);
 
