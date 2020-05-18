@@ -104,12 +104,10 @@ public class World : MonoBehaviour
         int yPos = (int)pos.y;
 
         // IMMUTABLE PASS
-        if (!IsVoxelInWorld(pos)) return 0; // AIR
-
-        if (yPos == 0) return 1; // BEDROCK
+        if (!IsVoxelInWorld(pos) || yPos == 0) return 1; // BEDROCK 
 
         // BASIC TERRAIN PASS
-        int terrainHeight = (int)(biome.terrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.terrainScale)) + biome.solidGroundHeight;
+        int terrainHeight = (int)((biome.terrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.terrainScale)) + biome.solidGroundHeight);
 
         byte voxelValue = 0;
 

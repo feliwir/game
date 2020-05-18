@@ -50,7 +50,6 @@ public class Chunk
     {
         if (x < 0 || x > VoxelData.ChunkWidth - 1 || y < 0 || y > VoxelData.ChunkHeight - 1 || z < 0 || z > VoxelData.ChunkWidth - 1)
             return false;
-
         return true;
     }
 
@@ -107,7 +106,7 @@ public class Chunk
     {
         for (int p = 0; p < 6; p++)
         {
-            if (!CheckVoxel(pos + VoxelData.faceChecks[p])) continue;
+            if (CheckVoxel(pos + VoxelData.faceChecks[p])) continue;
 
             byte blockID = voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
 
