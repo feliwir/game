@@ -150,7 +150,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f95548967b0c2954c93dd443ba6157c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  seed: 2147483647
+  biome: {fileID: 11400000, guid: 579c1f86bcae1e944a88b31aff2ca9d8, type: 2}
   player: {fileID: 963194228}
+  spawnPosition: {x: 0, y: 0, z: 0}
   material: {fileID: 2100000, guid: 2ad11457f7d92874a95e2cea2ec4e86c, type: 2}
   blocktypes:
   - blockName: Air
@@ -185,14 +188,22 @@ MonoBehaviour:
     bottomFaceTexture: 1
     leftFaceTexture: 2
     rightFaceTexture: 2
-  - blockName: Furnace
+  - blockName: Sand
     isSolid: 1
-    backFaceTexture: 13
-    frontFaceTexture: 12
-    topFaceTexture: 15
-    bottomFaceTexture: 15
-    leftFaceTexture: 13
-    rightFaceTexture: 13
+    backFaceTexture: 10
+    frontFaceTexture: 10
+    topFaceTexture: 10
+    bottomFaceTexture: 10
+    leftFaceTexture: 10
+    rightFaceTexture: 10
+  - blockName: Dirt
+    isSolid: 1
+    backFaceTexture: 1
+    frontFaceTexture: 1
+    topFaceTexture: 1
+    bottomFaceTexture: 1
+    leftFaceTexture: 1
+    rightFaceTexture: 1
 --- !u!4 &130501668
 Transform:
   m_ObjectHideFlags: 0

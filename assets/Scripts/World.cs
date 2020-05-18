@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
+    public int seed;
+    public BiomeAttributes biome;
+
     public Transform player;
     public Vector3 spawnPosition;
 
@@ -19,6 +22,8 @@ public class World : MonoBehaviour
 
     private void Start()
     {
+        Random.InitState(seed);
+
         GenerateWorld();
         playerLastChunkCoord = GetChunkCoordFromVector3(player.position);
     }
@@ -96,10 +101,35 @@ public class World : MonoBehaviour
 
     public byte GetVoxel(Vector3 pos)
     {
-        if (!IsVoxelInWorld(pos)) return 0;
-        else if (pos.y < 1) return 1;
-        else if (pos.y == VoxelData.ChunkHeight - 1) return 3;
-        return 2;
+        int yPos = (int)pos.y;
+
+        // IMMUTABLE PASS
+        if (!IsVoxelInWorld(pos)) return 0; // AIR
+
+        if (yPos == 0) return 1; // BEDROCK
+
+        // BASIC TERRAIN PASS
+        int terrainHeight = (int)(biome.terrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.terrainScale)) + biome.solidGroundHeight;
+
+        byte voxelValue = 0;
+
+        if (yPos == terrainHeight) voxelValue = 3;
+        else if (yPos < terrainHeight && yPos > terrainHeight - 4) voxelValue = 5;
+        else if (yPos > terrainHeight) return 0;
+        else voxelValue = 2;
+
+        // SECOND PASS
+        if (voxelValue != 2) return voxelValue;
+        
+        foreach(var lode in biome.lodes)
+        {
+            if (yPos > lode.minHeight && yPos < lode.maxHeight)
+            {
+                if (Noise.Get3DPerlin(pos, lode.noiseOffset, lode.scale, lode.threshold)) voxelValue = lode.blockID;
+            }
+        }
+
+        return voxelValue;
     }
 
     void CreateNewChunk(int x, int z)

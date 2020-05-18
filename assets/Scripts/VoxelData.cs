@@ -1,12 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using UnityEngine;
+﻿using UnityEngine;
 
 public static class VoxelData
 {
-    public static int ChunkWidth = 5;
-    public static int ChunkHeight = 15;
+    public static int ChunkWidth = 16;
+    public static int ChunkHeight = 128;
     public static int WorldSizeInChunks = 100;
 
     public static int WorldSizeInVoxels => WorldSizeInChunks * ChunkWidth;
