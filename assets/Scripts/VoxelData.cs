@@ -6,8 +6,12 @@ using UnityEngine;
 public static class VoxelData
 {
     public static int ChunkWidth = 5;
-    public static int ChunkHeight = 5;
-    public static int WorldSizeInChunks = 10;
+    public static int ChunkHeight = 15;
+    public static int WorldSizeInChunks = 100;
+
+    public static int WorldSizeInVoxels => WorldSizeInChunks * ChunkWidth;
+
+    public static readonly int ViewDistanceInChunks = 5;
 
     public static readonly int TextureAtlasSizeInBlocks = 4;
     public static float NormalizedBlockTextureSize => 1f / (float)TextureAtlasSizeInBlocks;

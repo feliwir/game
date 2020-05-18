@@ -38,6 +38,22 @@ public class Chunk
         CreateMesh();
     }
 
+    public bool IsActive
+    {
+        get => chunkObject.activeSelf;
+        set => chunkObject.SetActive(value);
+    }
+
+    public Vector3 position => chunkObject.transform.position;
+
+    bool IsVoxelInChunk(int x, int y, int z)
+    {
+        if (x < 0 || x > VoxelData.ChunkWidth - 1 || y < 0 || y > VoxelData.ChunkHeight - 1 || z < 0 || z > VoxelData.ChunkWidth - 1)
+            return false;
+
+        return true;
+    }
+
     void PopulateVoxelMap()
     {
         for (int y = 0; y < VoxelData.ChunkHeight; y++)
@@ -46,9 +62,7 @@ public class Chunk
             {
                 for (int z = 0; z < VoxelData.ChunkWidth; z++)
                 {
-                    if (y < 1) voxelMap[x, y, z] = 1;
-                    else if (y == VoxelData.ChunkHeight - 1) voxelMap[x, y, z] = 3;
-                    else voxelMap[x, y, z] = 2;
+                    voxelMap[x, y, z] = world.GetVoxel(new Vector3(x, y, z) + position);
                 }
             }
         }
@@ -68,18 +82,10 @@ public class Chunk
         }
     }
 
-    public bool IsActive
+    public byte GetVoxelFromMap(Vector3 pos)
     {
-        get { return chunkObject.activeSelf; }
-        set { chunkObject.SetActive(value); }
-    }
-
-    bool IsVoxelInChunk(int x,int y, int z)
-    {
-        if (x < 0 || x > VoxelData.ChunkWidth - 1 || y < 0 || y > VoxelData.ChunkHeight - 1 || z < 0 || z > VoxelData.ChunkWidth - 1)
-            return false;
-
-        return true;
+        pos -= position;
+        return voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
     }
 
     bool CheckVoxel(Vector3 pos)
@@ -88,9 +94,9 @@ public class Chunk
         int y = (int)pos.y;
         int z = (int)pos.z;
 
-        if (!IsVoxelInChunk(x,y,z))
+        if (!IsVoxelInChunk(x, y, z))
         {
-            return false;
+            return world.blocktypes[world.GetVoxel(pos + position)].isSolid;
         }
 
         return world.blocktypes[voxelMap[x, y, z]].isSolid;
@@ -100,7 +106,7 @@ public class Chunk
     {
         for (int p = 0; p < 6; p++)
         {
-            if (CheckVoxel(pos + VoxelData.faceChecks[p])) continue;
+            if (!CheckVoxel(pos + VoxelData.faceChecks[p])) continue;
 
             byte blockID = voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
 
@@ -123,10 +129,12 @@ public class Chunk
 
     void CreateMesh()
     {
-        Mesh mesh = new Mesh();
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangles.ToArray();
-        mesh.uv = uvs.ToArray();
+        Mesh mesh = new Mesh
+        {
+            vertices = vertices.ToArray(),
+            triangles = triangles.ToArray(),
+            uv = uvs.ToArray()
+        };
         mesh.RecalculateNormals();
 
         meshFilter.mesh = mesh;
@@ -147,12 +155,6 @@ public class Chunk
         uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y));
         uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + VoxelData.NormalizedBlockTextureSize));
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
 }
 
 public class ChunkCoord
@@ -164,5 +166,10 @@ public class ChunkCoord
     {
         x = _x;
         z = _z;
+    }
+
+    public bool Equals(ChunkCoord other)
+    {
+        return (other != null && other.x == x && other.z == z);
     }
 }
