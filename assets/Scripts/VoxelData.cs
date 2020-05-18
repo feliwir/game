@@ -7,6 +7,7 @@ public static class VoxelData
 {
     public static int ChunkWidth = 5;
     public static int ChunkHeight = 5;
+    public static int WorldSizeInChunks = 10;
 
     public static readonly int TextureAtlasSizeInBlocks = 4;
     public static float NormalizedBlockTextureSize => 1f / (float)TextureAtlasSizeInBlocks;
