@@ -22,7 +22,11 @@ public class World : MonoBehaviour
     ChunkCoord playerLastChunkCoord;
 
     Queue<ChunkCoord> chunksToCreate = new Queue<ChunkCoord>();
-    private bool isCreatingChunks;
+    List<Chunk> chunksToUpdate = new List<Chunk>();
+
+    bool applyingModifications = false;
+
+    Queue<VoxelMod> modifications = new Queue<VoxelMod>();
 
     public GameObject debugScreen;
 
@@ -46,9 +50,19 @@ public class World : MonoBehaviour
             playerLastChunkCoord = playerChunkCoord;
         }
 
-        if (chunksToCreate.Count > 0 && !isCreatingChunks)
+        if (modifications.Count > 0 && !applyingModifications)
         {
-            StartCoroutine("CreateChunks");
+            StartCoroutine(ApplyModifications());
+        }
+
+        if (chunksToCreate.Count > 0)
+        {
+            CreateChunk();
+        }
+
+        if (chunksToUpdate.Count > 0)
+        {
+            UpdateChunks();
         }
 
         if (Input.GetKeyDown(KeyCode.F3))
@@ -69,20 +83,84 @@ public class World : MonoBehaviour
             }
         }
 
+        while (modifications.Count > 0)
+        {
+            var v = modifications.Dequeue();
+            var coord = GetChunkCoordFromVector3(v.position);
+            if (chunks[coord.x, coord.z] == null)
+            {
+                chunks[coord.x, coord.z] = new Chunk(coord, this, true);
+                activeChunks.Add(coord);
+            }
+
+            chunks[coord.x, coord.z].modifications.Enqueue(v);
+
+            if (!chunksToUpdate.Contains(chunks[coord.x, coord.z])) chunksToUpdate.Add(chunks[coord.x, coord.z]);
+        }
+
+        for (var i = chunksToUpdate.Count - 1; i >= 0; i--)
+        {
+            chunksToUpdate[i].UpdateChunk();
+            chunksToUpdate.RemoveAt(i);
+        }
+
         spawnPosition = new Vector3((VoxelData.WorldSizeInChunks / 2f) * VoxelData.ChunkWidth, VoxelData.ChunkHeight - 50f, (VoxelData.WorldSizeInChunks / 2f) * VoxelData.ChunkWidth);
         player.position = spawnPosition;
     }
 
-    private IEnumerator CreateChunks()
+    void CreateChunk()
     {
-        isCreatingChunks = true;
-        while (chunksToCreate.Count > 0)
+        var c = chunksToCreate.Dequeue();
+        activeChunks.Add(c);
+        chunks[c.x, c.z].Init();
+    }
+
+    void UpdateChunks()
+    {
+        bool updated = false;
+        int index = 0;
+
+        while (!updated && index < chunksToUpdate.Count - 1)
         {
-            var coord = chunksToCreate.Dequeue();
-            chunks[coord.x, coord.z].Init();
-            yield return null;
+            if (chunksToUpdate[index].isVoxelMapPopulated)
+            {
+                chunksToUpdate[index].UpdateChunk();
+                chunksToUpdate.RemoveAt(index);
+                updated = true;
+            }
+            else index++;
         }
-        isCreatingChunks = false;
+    }
+
+    IEnumerator ApplyModifications()
+    {
+        applyingModifications = true;
+        int count = 0;
+
+        while (modifications.Count > 0)
+        {
+            var v = modifications.Dequeue();
+            var coord = GetChunkCoordFromVector3(v.position);
+
+            if (chunks[coord.x, coord.z] == null)
+            {
+                chunks[coord.x, coord.z] = new Chunk(coord, this, true);
+                activeChunks.Add(coord);
+            }
+
+            chunks[coord.x, coord.z].modifications.Enqueue(v);
+
+            if (!chunksToUpdate.Contains(chunks[coord.x, coord.z])) chunksToUpdate.Add(chunks[coord.x, coord.z]);
+
+            count++;
+            if (count > 200)
+            {
+                count = 0;
+                yield return null;
+            }
+        }
+
+        applyingModifications = false;
     }
 
     private ChunkCoord GetChunkCoordFromVector3(Vector3 pos)
@@ -174,26 +252,39 @@ public class World : MonoBehaviour
         int yPos = (int)pos.y;
 
         // IMMUTABLE PASS
-        if (!IsVoxelInWorld(pos) || yPos == 0) return 1; // BEDROCK 
+        if (!IsVoxelInWorld(pos) || yPos == 0) return 1; // BEDROCK
 
         // BASIC TERRAIN PASS
         int terrainHeight = (int)((biome.terrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.terrainScale)) + biome.solidGroundHeight);
 
         byte voxelValue;
 
-        if (yPos == terrainHeight) voxelValue = 3;
-        else if (yPos < terrainHeight && yPos > terrainHeight - 4) voxelValue = 5;
-        else if (yPos > terrainHeight) return 0;
-        else voxelValue = 2;
+        if (yPos == terrainHeight) voxelValue = 3; // GRASS
+        else if (yPos < terrainHeight && yPos > terrainHeight - 4) voxelValue = 5; // DIRT
+        else if (yPos > terrainHeight) return 0; // AIR
+        else voxelValue = 2; // STONE
 
         // SECOND PASS
-        if (voxelValue != 2) return voxelValue;
-        
-        foreach(var lode in biome.lodes)
+        if (voxelValue == 2) // STONE
         {
-            if (yPos > lode.minHeight && yPos < lode.maxHeight)
+            foreach (var lode in biome.lodes)
             {
-                if (Noise.Get3DPerlin(pos, lode.noiseOffset, lode.scale, lode.threshold)) voxelValue = lode.blockID;
+                if (yPos > lode.minHeight && yPos < lode.maxHeight)
+                {
+                    if (Noise.Get3DPerlin(pos, lode.noiseOffset, lode.scale, lode.threshold)) voxelValue = lode.blockID;
+                }
+            }
+        }
+
+        // TREE PASS
+        if (yPos == terrainHeight)
+        {
+            if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.treeZoneScale) > biome.treeZoneThreshold)
+            {
+                if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.treePlacementScale) > biome.treePlacementThreshold)
+                {
+                    Structure.MakeTree(pos, modifications, biome.minTreeHeight, biome.maxTreeHeight);
+                }
             }
         }
 
@@ -250,5 +341,17 @@ public class BlockType
                 Debug.Log("Error in GetTextureID; invalid face index");
                 return -1;
         }
+    }
+}
+
+public class VoxelMod
+{
+    public Vector3 position;
+    public byte id;
+
+    public VoxelMod(Vector3 _position, byte _id)
+    {
+        position = _position;
+        id = _id;
     }
 }
