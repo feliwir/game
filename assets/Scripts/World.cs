@@ -23,10 +23,11 @@ public class World : MonoBehaviour
 
     Queue<ChunkCoord> chunksToCreate = new Queue<ChunkCoord>();
     List<Chunk> chunksToUpdate = new List<Chunk>();
+    public Queue<Chunk> chunksToDraw = new Queue<Chunk>();
 
     bool applyingModifications = false;
 
-    Queue<VoxelMod> modifications = new Queue<VoxelMod>();
+    Queue<Queue<VoxelMod>> modifications = new Queue<Queue<VoxelMod>>();
 
     public GameObject debugScreen;
 
@@ -50,19 +51,21 @@ public class World : MonoBehaviour
             playerLastChunkCoord = playerChunkCoord;
         }
 
-        if (modifications.Count > 0 && !applyingModifications)
-        {
-            StartCoroutine(ApplyModifications());
-        }
+        if (!applyingModifications) ApplyModifications();
 
-        if (chunksToCreate.Count > 0)
-        {
-            CreateChunk();
-        }
+        if (chunksToCreate.Count > 0) CreateChunk();
 
-        if (chunksToUpdate.Count > 0)
+        if (chunksToUpdate.Count > 0) UpdateChunks();
+
+        if (chunksToDraw.Count > 0)
         {
-            UpdateChunks();
+            lock(chunksToDraw)
+            {
+                if (chunksToDraw.Peek().isEditable)
+                {
+                    chunksToDraw.Dequeue().CreateMesh();
+                }
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.F3))
@@ -83,19 +86,27 @@ public class World : MonoBehaviour
             }
         }
 
-        while (modifications.Count > 0)
+        lock (modifications)
         {
-            var v = modifications.Dequeue();
-            var coord = GetChunkCoordFromVector3(v.position);
-            if (chunks[coord.x, coord.z] == null)
+            while (modifications.Count > 0)
             {
-                chunks[coord.x, coord.z] = new Chunk(coord, this, true);
-                activeChunks.Add(coord);
+                var queue = modifications.Dequeue();
+
+                while (queue != null && queue.Count > 0)
+                {
+                    var v = queue.Dequeue();
+                    var coord = GetChunkCoordFromVector3(v.position);
+                    if (chunks[coord.x, coord.z] == null)
+                    {
+                        chunks[coord.x, coord.z] = new Chunk(coord, this, true);
+                        activeChunks.Add(coord);
+                    }
+
+                    chunks[coord.x, coord.z].modifications.Enqueue(v);
+
+                    if (!chunksToUpdate.Contains(chunks[coord.x, coord.z])) chunksToUpdate.Add(chunks[coord.x, coord.z]);
+                }
             }
-
-            chunks[coord.x, coord.z].modifications.Enqueue(v);
-
-            if (!chunksToUpdate.Contains(chunks[coord.x, coord.z])) chunksToUpdate.Add(chunks[coord.x, coord.z]);
         }
 
         for (var i = chunksToUpdate.Count - 1; i >= 0; i--)
@@ -122,7 +133,7 @@ public class World : MonoBehaviour
 
         while (!updated && index < chunksToUpdate.Count - 1)
         {
-            if (chunksToUpdate[index].isVoxelMapPopulated)
+            if (chunksToUpdate[index].isEditable)
             {
                 chunksToUpdate[index].UpdateChunk();
                 chunksToUpdate.RemoveAt(index);
@@ -132,31 +143,31 @@ public class World : MonoBehaviour
         }
     }
 
-    IEnumerator ApplyModifications()
+    void ApplyModifications()
     {
         applyingModifications = true;
-        int count = 0;
 
-        while (modifications.Count > 0)
+        lock (modifications)
         {
-            var v = modifications.Dequeue();
-            var coord = GetChunkCoordFromVector3(v.position);
-
-            if (chunks[coord.x, coord.z] == null)
+            while (modifications.Count > 0)
             {
-                chunks[coord.x, coord.z] = new Chunk(coord, this, true);
-                activeChunks.Add(coord);
-            }
+                var queue = modifications.Dequeue();
 
-            chunks[coord.x, coord.z].modifications.Enqueue(v);
+                while (queue != null && queue.Count > 0)
+                {
+                    var v = queue.Dequeue();
+                    var coord = GetChunkCoordFromVector3(v.position);
 
-            if (!chunksToUpdate.Contains(chunks[coord.x, coord.z])) chunksToUpdate.Add(chunks[coord.x, coord.z]);
+                    if (chunks[coord.x, coord.z] == null)
+                    {
+                        chunks[coord.x, coord.z] = new Chunk(coord, this, true);
+                        activeChunks.Add(coord);
+                    }
 
-            count++;
-            if (count > 200)
-            {
-                count = 0;
-                yield return null;
+                    chunks[coord.x, coord.z].modifications.Enqueue(v);
+
+                    if (!chunksToUpdate.Contains(chunks[coord.x, coord.z])) chunksToUpdate.Add(chunks[coord.x, coord.z]);
+                }
             }
         }
 
@@ -224,7 +235,7 @@ public class World : MonoBehaviour
         if (!IsChunkInWorld(thisChunk) || pos.y < 0 || pos.y > VoxelData.ChunkHeight) return false;
         //if (IsVoxelInWorld(pos)) return false; // TODO: fix this
 
-        if (chunks[thisChunk.x, thisChunk.z] != null && chunks[thisChunk.x, thisChunk.z].isVoxelMapPopulated)
+        if (chunks[thisChunk.x, thisChunk.z] != null && chunks[thisChunk.x, thisChunk.z].isEditable)
         {
             return blocktypes[chunks[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isSolid;
         }
@@ -239,7 +250,7 @@ public class World : MonoBehaviour
         if (!IsChunkInWorld(thisChunk) || pos.y < 0 || pos.y > VoxelData.ChunkHeight) return false;
         //if (IsVoxelInWorld(pos)) return false; // TODO: fix this
 
-        if (chunks[thisChunk.x, thisChunk.z] != null && chunks[thisChunk.x, thisChunk.z].isVoxelMapPopulated)
+        if (chunks[thisChunk.x, thisChunk.z] != null && chunks[thisChunk.x, thisChunk.z].isEditable)
         {
             return blocktypes[chunks[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
@@ -283,7 +294,10 @@ public class World : MonoBehaviour
             {
                 if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.treePlacementScale) > biome.treePlacementThreshold)
                 {
-                    Structure.MakeTree(pos, modifications, biome.minTreeHeight, biome.maxTreeHeight);
+                    lock (modifications)
+                    {
+                        modifications.Enqueue(Structure.MakeTree(pos, biome.minTreeHeight, biome.maxTreeHeight));
+                    }
                 }
             }
         }
