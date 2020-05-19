@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -25,10 +26,21 @@ public class Player : MonoBehaviour
     private float verticalMomentum = 0;
     private bool jumpRequest;
 
+    public Transform highlightBlock;
+    public Transform placeBlock;
+    public float checkIncrement = 0.1f;
+    public float reach = 8f;
+
+    public Text selectedBlockText;
+    public byte selectedBlockIndex = 1;
+
     public void Start()
     {
         cam = GameObject.Find("Main Camera").transform;
         world = GameObject.Find("World").GetComponent<World>();
+
+        Cursor.lockState = CursorLockMode.Locked;
+        selectedBlockText.text = world.blocktypes[selectedBlockIndex].blockName + " block selected";
     }
 
     public void FixedUpdate()
@@ -44,6 +56,7 @@ public class Player : MonoBehaviour
     public void Update()
     {
         GetPlayerInputs();
+        PlaceCursorBlocks();
     }
 
     private void Jump()
@@ -87,6 +100,48 @@ public class Player : MonoBehaviour
 
         if (isGrounded && Input.GetButtonDown("Jump")) jumpRequest = true;
 
+        var scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll != 0)
+        {
+            if (scroll < 0 && selectedBlockIndex > 1) selectedBlockIndex--;
+            else if (selectedBlockIndex < (byte)world.blocktypes.Length - 1) selectedBlockIndex++;
+
+            selectedBlockText.text = world.blocktypes[selectedBlockIndex].blockName + " block selected";
+        }
+
+        if (highlightBlock.gameObject.activeSelf)
+        {
+            if (Input.GetMouseButtonDown(0)) world.GetChunkFromVector3(highlightBlock.position).EditVoxel(highlightBlock.position, 0);
+
+            if (Input.GetMouseButtonDown(1)) world.GetChunkFromVector3(placeBlock.position).EditVoxel(placeBlock.position, selectedBlockIndex);
+        }
+    }
+
+    private void PlaceCursorBlocks()
+    {
+        var step = checkIncrement;
+        var lastPos = new Vector3();
+
+        while (step < reach)
+        {
+            var pos = cam.position + (cam.forward * step);
+            var blockPos = new Vector3((int)pos.x, (int)pos.y, (int)pos.z);
+            if (world.CheckForVoxel(pos))
+            {
+                highlightBlock.position = blockPos;
+                placeBlock.position = lastPos;
+
+                highlightBlock.gameObject.SetActive(true);
+                placeBlock.gameObject.SetActive(true);
+                return;
+            }
+
+            lastPos = blockPos;
+            step += checkIncrement;
+        }
+
+        highlightBlock.gameObject.SetActive(false);
+        placeBlock.gameObject.SetActive(false);
     }
 
     private float checkDownSpeed (float downSpeed)

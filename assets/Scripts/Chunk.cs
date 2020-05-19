@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 public class Chunk
 {
@@ -44,8 +45,7 @@ public class Chunk
         chunkObject.name = "Chunk: " + coord.x + "-" + coord.z;
 
         PopulateVoxelMap();
-        CreateMeshData();
-        CreateMesh();
+        UpdateChunk();
     }
 
     public bool IsActive
@@ -67,6 +67,34 @@ public class Chunk
         return true;
     }
 
+    public void EditVoxel(Vector3 pos, byte newID)
+    {
+        var x = (int)(pos.x - chunkObject.transform.position.x);
+        var y = (int)pos.y;
+        var z = (int)(pos.z - chunkObject.transform.position.z);
+
+        voxelMap[x, y, z] = newID;
+
+        UpdateSurroundingVoxels(x, y, z);
+
+        UpdateChunk();
+    }
+
+    void UpdateSurroundingVoxels(int x, int y, int z)
+    {
+        var thisVoxel = new Vector3(x, y, z);
+
+        for (var p = 0; p < 6; p++)
+        {
+            var currentVoxel = thisVoxel + VoxelData.faceChecks[p];
+
+            if (!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
+            {
+                world.GetChunkFromVector3(currentVoxel + position).UpdateChunk();
+            }
+        }
+    }
+
     void PopulateVoxelMap()
     {
         for (int y = 0; y < VoxelData.ChunkHeight; y++)
@@ -82,8 +110,10 @@ public class Chunk
         isVoxelMapPopulated = true;
     }
 
-    void CreateMeshData()
+    void UpdateChunk()
     {
+        ClearMeshData();
+
         for (int y = 0; y < VoxelData.ChunkHeight; y++)
         {
             for (int x = 0; x < VoxelData.ChunkWidth; x++)
@@ -91,10 +121,12 @@ public class Chunk
                 for (int z = 0; z < VoxelData.ChunkWidth; z++)
                 {
                     if (!world.blocktypes[voxelMap[x, y, z]].isSolid) continue;
-                    AddVoxelDataToChunk(new Vector3(x, y, z));
+                    UpdateMeshData(new Vector3(x, y, z));
                 }
             }
         }
+
+        CreateMesh();
     }
 
     public byte GetVoxelFromMap(Vector3 pos)
@@ -125,7 +157,7 @@ public class Chunk
         return voxelMap[x, y, z];
     }
 
-    void AddVoxelDataToChunk(Vector3 pos)
+    void UpdateMeshData(Vector3 pos)
     {
         for (int p = 0; p < 6; p++)
         {
@@ -161,6 +193,14 @@ public class Chunk
         mesh.RecalculateNormals();
 
         meshFilter.mesh = mesh;
+    }
+
+    void ClearMeshData()
+    {
+        vertexIndex = 0;
+        vertices.Clear();
+        triangles.Clear();
+        uvs.Clear();
     }
 
     void AddTexture(int textureID)
