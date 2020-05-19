@@ -18,11 +18,21 @@ public class Chunk
 
     World world;
 
+    private bool _isActive;
+    public bool isVoxelMapPopulated = false;
+
     // Start is called before the first frame update
-    public Chunk(ChunkCoord _coord, World _world)
+    public Chunk(ChunkCoord _coord, World _world, bool generateOnLoad)
     {
         coord = _coord;
         world = _world;
+        IsActive = true;
+
+        if (generateOnLoad) Init();
+    }
+
+    public void Init()
+    {
         chunkObject = new GameObject();
         meshFilter = chunkObject.AddComponent<MeshFilter>();
         meshRenderer = chunkObject.AddComponent<MeshRenderer>();
@@ -40,8 +50,12 @@ public class Chunk
 
     public bool IsActive
     {
-        get => chunkObject.activeSelf;
-        set => chunkObject.SetActive(value);
+        get => _isActive;
+        set
+        {
+            _isActive = value;
+            if (chunkObject != null) chunkObject.SetActive(value);
+        }
     }
 
     public Vector3 position => chunkObject.transform.position;
@@ -65,6 +79,7 @@ public class Chunk
                 }
             }
         }
+        isVoxelMapPopulated = true;
     }
 
     void CreateMeshData()
@@ -96,10 +111,18 @@ public class Chunk
 
         if (!IsVoxelInChunk(x, y, z))
         {
-            return world.blocktypes[world.GetVoxel(pos + position)].isSolid;
+            return world.CheckForVoxel(pos + position);
         }
 
         return world.blocktypes[voxelMap[x, y, z]].isSolid;
+    }
+
+    public byte GetVoxelFromGlobalVector3(Vector3 pos)
+    {
+        var x = (int)(pos.x - chunkObject.transform.position.x);
+        var y = (int)pos.y;
+        var z = (int)(pos.z - chunkObject.transform.position.z);
+        return voxelMap[x, y, z];
     }
 
     void AddVoxelDataToChunk(Vector3 pos)
@@ -166,6 +189,15 @@ public class ChunkCoord
     {
         x = _x;
         z = _z;
+    }
+
+    public ChunkCoord(Vector3 pos)
+    {
+        int xCheck = (int)pos.x;
+        int zCheck = (int)pos.z;
+
+        x = xCheck / VoxelData.ChunkWidth;
+        z = zCheck / VoxelData.ChunkWidth;
     }
 
     public bool Equals(ChunkCoord other)
