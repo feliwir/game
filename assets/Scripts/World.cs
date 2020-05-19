@@ -200,6 +200,7 @@ public class BlockType
 {
     public string blockName = "Default";
     public bool isSolid = true;
+    public Sprite icon;
 
     [Header("Texture Values")]
     public int backFaceTexture;
