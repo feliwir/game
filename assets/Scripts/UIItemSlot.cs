@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class UIItemSlot : MonoBehaviour
@@ -120,6 +121,19 @@ public class ItemSlot
             EmptySlot();
             return amount;
         }
+    }
+
+    public ItemStack TakeAll()
+    {
+        var handOver = new ItemStack(stack.id, stack.amount);
+        EmptySlot();
+        return handOver;
+    }
+
+    public void InsertStack(ItemStack _stack)
+    {
+        stack = _stack;
+        uiItemSlot.UpdateSlot();
     }
 
     public bool HasItem => stack != null;

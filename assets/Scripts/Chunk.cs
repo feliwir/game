@@ -147,6 +147,7 @@ public class Chunk
             while (modifications.Count > 0)
             {
                 var v = modifications.Dequeue();
+                if (v == null) continue;
                 var pos = v.position -= position;
                 voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = v.id;
             }
