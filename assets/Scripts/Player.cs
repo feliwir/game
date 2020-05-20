@@ -31,7 +31,7 @@ public class Player : MonoBehaviour
     public float checkIncrement = 0.1f;
     public float reach = 8f;
 
-    public byte selectedBlockIndex = 1;
+    public Toolbar toolbar;
 
     public void Start()
     {
@@ -43,6 +43,8 @@ public class Player : MonoBehaviour
 
     public void FixedUpdate()
     {
+        if (world.inUI) return;
+
         CalculateVelocity();
         if (jumpRequest) Jump();
 
@@ -53,6 +55,12 @@ public class Player : MonoBehaviour
 
     public void Update()
     {
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            world.inUI = !world.inUI;
+        }
+
+        if (world.inUI) return;
         GetPlayerInputs();
         PlaceCursorBlocks();
     }
@@ -103,7 +111,15 @@ public class Player : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(0)) world.GetChunkFromVector3(highlightBlock.position).EditVoxel(highlightBlock.position, 0);
 
-            if (Input.GetMouseButtonDown(1)) world.GetChunkFromVector3(placeBlock.position).EditVoxel(placeBlock.position, selectedBlockIndex);
+            if (Input.GetMouseButtonDown(1))
+            {
+                var slot = toolbar.slots[toolbar.slotIndex];
+                if (slot.HasItem)
+                {
+                    world.GetChunkFromVector3(placeBlock.position).EditVoxel(placeBlock.position, slot.itemSlot.stack.id);
+                    slot.itemSlot.Take(1);
+                }
+            }
         }
     }
 

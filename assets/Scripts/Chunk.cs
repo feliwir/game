@@ -237,7 +237,6 @@ public class Chunk
                 transparentTriangles.Add(vertexIndex + 3);
             }
 
-            
             vertexIndex += 4;
         }
     }
