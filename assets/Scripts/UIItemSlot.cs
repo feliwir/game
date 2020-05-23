@@ -72,6 +72,8 @@ public class ItemSlot
     public ItemStack stack = null;
     private UIItemSlot uiItemSlot = null;
 
+    public bool isCreative;
+
     public ItemSlot(UIItemSlot _uiItemSlot)
     {
         stack = null;
