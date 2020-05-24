@@ -7,6 +7,11 @@ public class World : MonoBehaviour
     public int seed;
     public BiomeAttributes biome;
 
+    [Range(0.95f, 0f)]
+    public float globalLightLevel;
+    public Color Day;
+    public Color Night;
+
     public Transform player;
     public Vector3 spawnPosition;
 
@@ -49,6 +54,9 @@ public class World : MonoBehaviour
     private void Update()
     {
         playerChunkCoord = GetChunkCoordFromVector3(player.position);
+
+        Shader.SetGlobalFloat("GlobalLightLevel", globalLightLevel);
+        Camera.main.backgroundColor = Color.Lerp(Day, Night, globalLightLevel);
 
         if (!playerChunkCoord.Equals(playerLastChunkCoord))
         {
